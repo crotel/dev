@@ -1,15 +1,15 @@
-const data = "https://data.crotel.me";
+const data = "https://crotel.me/data/";
 const headers = new Headers({
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         });
 const request = new Request(`${data}`, {
-			//Origin: '*',
+			
             method: 'GET',
             headers: headers,
             credentials: 'include', // causes the browser to send cookies even for a cross-origin call
-            redirect: 'follow',
-            mode: 'cors'
+            redirect: 'follow'
+            //mode: 'cors'
         });
 fetch(request)
     .then(function (response) {
