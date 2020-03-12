@@ -1,4 +1,4 @@
-fetch('https://cro.tel/data&formats=plaintext&order=published_at%20DESC&limit=all' )
+fetch('https://data.crotel.me' )
     .then(function (response) {
         if (!response.ok) {
             throw new Error("HTTP error, status = " + response.status);
