@@ -1,4 +1,17 @@
-fetch('https://cro.tel/data&formats=plaintext&order=published_at%20DESC&limit=all' )
+const data = "https://data.crotel.me";
+const headers = new Headers({
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        });
+const request = new Request(`${data}`, {
+			Origin: '*',
+            method: 'GET',
+            headers: headers,
+            credentials: 'include', // causes the browser to send cookies even for a cross-origin call
+            redirect: 'follow',
+            mode: 'cors'
+        });
+fetch(request)
     .then(function (response) {
         if (!response.ok) {
             throw new Error("HTTP error, status = " + response.status);
@@ -36,7 +49,7 @@ fetch('https://cro.tel/data&formats=plaintext&order=published_at%20DESC&limit=al
                 fgpListItem.setAttribute("class", 'row ' + 'timeline-element ' + 'separline');
                 fgpListItem.innerHTML = "<div class='timeline-date-panel col-xs-12 col-md-6 align-right'>" + "<div class='time-line-date-content'>" + "<p class='animated fadeInRight mbr-timeline-date mbr-fonts-style display-5'>" + publishTime + '<br>' + '</p>' + '</div>';
                 fgpListItem.innerHTML += "<span class='iconBackground'>" + '</span>';
-                fgpListItem.innerHTML += "<div class='col-xs-12 col-md-6 align-left animated fadeInRight'>" + "<div class='timeline-text-content'>" + "<h4 class='mbr-timeline-title pb-3 mbr-fonts-style display-5'>" + json.posts[i].title + '<br>' + '</h4>' + "<p class='animated fadeIn mbr-timeline-text mbr-fonts-style display-7'>" + plaintext + '<br>' + '</p>' + '</div>' + '</div>';
+                fgpListItem.innerHTML += "<div class='col-xs-12 col-md-6 align-left animated fadeInRight' style='padding-left: 5em;'>" + "<div class='timeline-text-content'>" + "<h4 class='mbr-timeline-title pb-3 mbr-fonts-style display-5'>" + json.posts[i].title + '<br>' + '</h4>' + "<p class='animated fadeIn mbr-timeline-text mbr-fonts-style display-7'>" + plaintext + '<br>' + '</p>' + '</div>' + '</div>';
                 fgpList.appendChild(fgpListItem);
 
             }
