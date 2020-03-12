@@ -4,7 +4,7 @@ const headers = new Headers({
             'Content-Type': 'application/json'
         });
 const request = new Request(`${data}`, {
-			Origin: '*',
+			//Origin: '*',
             method: 'GET',
             headers: headers,
             credentials: 'include', // causes the browser to send cookies even for a cross-origin call
