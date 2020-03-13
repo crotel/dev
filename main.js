@@ -1,5 +1,5 @@
 /*
-const data = "https://crotel.me/data";
+const data = "https://crotel.me/data/";
 const headers = new Headers({
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -14,7 +14,8 @@ const request = new Request(`${data}`, {
         
 fetch(request)
 */
-fetch('https://data-me.crotel.workers.dev')
+/*fetch('https://data-me.crotel.workers.dev')*/
+fetch('https://crotel.me/data/')
     .then(function (response) {
         if (!response.ok) {
             throw new Error("HTTP error, status = " + response.status);
