@@ -14,7 +14,7 @@ const request = new Request(`${data}`, {
         
 fetch(request)
 */
-fetch('https://crotel.me/data')
+fetch('https://data-me.crotel.workers.dev')
     .then(function (response) {
         if (!response.ok) {
             throw new Error("HTTP error, status = " + response.status);
