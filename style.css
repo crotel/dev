@@ -1,52 +1,39 @@
 	* {
 	    font-family: 'Roboto Slab';
-	}
-
-	body {
-	    margin: 10%;
-	}
-
-	/*
-	.fullscreen {
-	    text-align: center;
-	    height: 100vh;
-	    width: 100vw;
-	    alignment-baseline: middle;
-	}
-*/
-.align-right{
-    padding-left: 5em;
-}
-.align-left{
-    padding-right: 5em;
-}
-	.align-center {
-/*	    text-align: center;*/
-	}
-
-	section.header {
-	    text-align: center;
-	    height: 100vh;
-	    width: 100%;
-	    alignment-baseline: middle;
-	    /*
-	    padding-top: 50%;
-	    padding-bottom: 30%;
-*/
-	}
-
-	section.footers {
-        text-align: center;
-	    padding-top: 2em;
-	    font-size: 0.7em;
-	    color: rgb(136, 136, 136);
-	}
-
-	section.header > .container {
-	    padding-top: 50%;
-	    padding-bottom: 30%;
+	    margin: 0 auto;
 	}
 
 	a {
 	    text-decoration: none;
+	}
+
+	section.header {
+	    text-align: center;
+	    height: calc(100vh - 3.7em);
+	    width: 100%;
+	}
+
+	section.header > .container {
+	    padding-top: 40vh;
+	    padding-bottom: 10vh;
+	}
+
+	#readMoreBtn {
+	    bottom: 5vh;
+	    position: fixed;
+	    padding-left: calc(50% - 25px);
+	}
+
+	section.content {
+	    padding-left: 15%;
+	    padding-right: 15%;
+	    min-height: calc(100vh - 3.7em - 10vh);
+	}
+
+	section.footers {
+	    text-align: center;
+	    padding-top: 2em;
+	    font-size: 0.7em;
+	    padding-bottom: 1em;
+	    color: rgb(136, 136, 136);
 	}

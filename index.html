@@ -9,18 +9,17 @@
         //            });
         //        }
     </script>
-    <!--<base href="http://www.w3schools.com/images/" target="_blank">-->
-    <base href="https://cdn.jsdelivr.net/gh/crotel/dev@master/">
+    <!--    <base href="https://cdn.jsdelivr.net/gh/crotel/dev@master/">-->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no">
     <!--<link rel="shortcut icon" href="assets/images/crotel-1.svg" type="image/x-icon">-->
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <!--    <link rel="manifest" href="site.webmanifest">-->
-    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#595959">
+    <link rel="mask-icon" color="#595959" href="safari-pinned-tab.svg">
     <meta name="msapplication-TileColor" content="#2d89ef">
     <meta name="theme-color" content="#ffffff">
     <meta name="description" content="">
@@ -29,10 +28,7 @@
     <!-- tell iOS devices that this app can work in full screen mode. No need for navbars -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>CROTEL</title>
-
-    <script src="main.js"></script>
     <!--    <link rel="preload" as="style" href="https://cdn.jsdelivr.net/gh/daneden/animate.css@master/animate.min.css">-->
-
     <!--    <link rel="preload" as="style" href='font.css' type='text/css'>-->
     <link rel="stylesheet" href="font.css">
     <!--    <link rel="preload" as="style" href="style.css" type='text/css'>-->
@@ -40,49 +36,43 @@
 </head>
 
 <body>
-    <section class="header cid-rKXD51Cg9x fullscreen" id="header6-9">
+
+    <section class="header cid-rKXD51Cg9x fullscreen" id="header">
         <div class="container">
             <div class="row justify-content-md-center">
                 <div class="white col-md-10">
-
                     <h1 class="section-title align-center bold pb-3 fonts-style ">
-                        <!--                    <iframe href="logo.html" style="border: none;"></iframe><br>
-    --> <span style="font-weight: normal;">
+                        <span style="font-weight: normal;">
                             CROTEL</span>©</h1>
                     <p class="text align-center pb-3 fonts-style ">
                         Nothing is impossible.</p>
                 </div>
             </div>
         </div>
-        <div class="arrow hidden-sm-down" aria-hidden="true">
-            <a href="#next">
-                <i class="mbri-down iconfont">￬</i>
-            </a>
+        <div class="arrow hidden-sm-down" id="readMoreBtn">
+            <svg t="1584066670690" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2012" width="50" height="50">
+                <path d="M768 384l-256 256-256-256z" fill="#181818" p-id="2013"></path>
+            </svg>
         </div>
     </section>
-    <section class="engine"><a href="https://cro.tel">CROTEL©</a></section>
-    <section class="content timeline1 cid-rKTOgHIQXi" id="timeline1">
+    <section class="content timeline1 cid-rKTOgHIQXi body" id="content" style="display:none;">
         <div class="container align-center">
-            <!--
-            <h2 class="section-title pb-3 fonts-style ">Time Line</h2>
-            <h3 class="section-subtitle pb-5 fonts-style ">Done and doing</h3>
--->
             <div class="container timelines-container">
             </div>
         </div>
     </section>
-    <section once="footers" class="cid-rKTPCWDhjn footers" id="footer7-4">
+    <section once="footers" class="cid-rKTPCWDhjn footers" id="footer" style="display:none;">
         <div class="container">
             <div class="media-container-row align-center white">
                 <div class="row row-copirayt">
-                    <p class="text mb-0 fonts-style white align-center display-7">
+                    <p class="text fonts-style white align-center display">
                         © Copyright 2019 Crotel - All Rights Reserved
                     </p>
                 </div>
             </div>
         </div>
     </section>
-
+    <script src="main.js"></script>
 </body>
 
 </html>
