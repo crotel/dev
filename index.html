@@ -4,7 +4,7 @@
 <head>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('https://cdn.jsdelivr.net/gh/crotel/dev@6403aaa/sw.js').catch(function(error) {
+            navigator.serviceWorker.register('sw.js').catch(function(error) {
                 console.error(error);
             });
         }
