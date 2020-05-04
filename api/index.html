@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!--
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="main.js" as="script">
+-->
+	<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+<body>
+<section id="sectionLogin">
+	<h1>
+		Login
+	</h1>
+<!--        <form id="login" /*onsubmit="submitLoginForm(event)"*/> -->
+	<div>
+		<label> LogIn </label><br>
+		<input id="name" type="text" name="name" placeholder="Username">
+		<br>
+		<input id="pass" type="password" name="pass" placeholder="Password">
+		<br>
+		<button id="login">Login</button> 
+<!--            <input id="login" name="login" type="submit" value="Login">-->
+	</div>
+	<br>
+<!--		<div id="result"> </div>-->
+</section>
+<section id="sectionLoginDetail" class="unactive">
+	<div>
+		<input name="account" type="button" onclick="toggledisplay('accountDetail');" value="Account">
+		<div id="accountDetail" style="display: none;">
+			<ul id="accountDetailList">
+			</ul>
+		</div>
+	</div>
+	<div>
+		<input name="myPosts" type="button" onclick="toggledisplay('myPostsList');" value="My Posts List">
+		<div id="myPostsList" style="display: block;">
+			<ul id="postsTitleList">
+			</ul>
+		</div>
+	</div>
+</section>
+<section id="sectionPost" class="unactive">
+<!--        <h1>Login</h1>-->
+<!--        <form id="post" /*onsubmit="submitPost(post)"*/> -->
+	<div id="post">
+		<div id="p__pnp" onclick="togglepnp('p__pnp_l1','p__pnp_l2','p__pnp_l4');">
+			<div id="p__pnp_l1" style="color: rgb(255, 131, 131);">
+				Private
+			</div>
+			<div id="p__pnp_l2" style="display: none;">
+			</div>
+			<div id="p__pnp_l3">
+			</div>
+			<div id="p__pnp_l4" style="background: rgb(255, 131, 131);">
+			</div>
+		</div>
+		<label id="l__title"> Title </label><br>
+		<input id="p__objectId" type="text" name="objectId" style="display: none;">
+		<input id="p__title" type="text" name="title" placeholder="title">
+		<br>
+		<label id="l__tag"> Tag </label><br>
+		<input id="p__tag" type="text" name="tag" placeholder="tag">
+		<br>
+		<label id="l__content"> Content </label><br>
+		<textarea id="p__content" type="text" name="content" placeholder="Content"></textarea>
+		<br>
+<!--            <input id="contentPost" onclick="submitPost();" type="submit" value="Post">-->
+		<div id="postBtn">
+			<input id='contentPost' type='button' value='Post'>
+			<input id='updatePost' type='button' value='Update' style='display:none;'>
+			<input id='deletePost' type='button' value='Delete' style='display:none;'>
+			<input id='newPost' type='button' name='newPost' class='a_d_p_title' onclick='_dom("_newPost",null);' value='New Post' style='display:none;'>
+		</div>
+	</div>
+	<br>
+</section>
+</body>
+<script src="main.js">
+</script>
+</html>
