@@ -1,3 +1,13 @@
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// This is a generated file. You can view the original                  //
+// source in your browser if your browser supports source maps.         //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+
+
 (function () {
 
 /* Imports */
@@ -11,60 +21,39 @@ var Promise;
 
 var require = meteorInstall({"node_modules":{"meteor":{"promise":{"modern.js":function module(){
 
-///////////////////////////////////////////////////////////////////////////////////
-//                                                                               //
-// packages/promise/modern.js                                                    //
-//                                                                               //
-///////////////////////////////////////////////////////////////////////////////////
-                                                                                 //
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// packages/promise/modern.js                                              //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+                                                                           //
 // Initialize the package-scoped Promise variable with global.Promise in
 // all environments, even if it's not defined.
 Promise = global.Promise;
 
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
-},"server.js":function module(require,exports,module){
+},"client.js":function module(require){
 
-///////////////////////////////////////////////////////////////////////////////////
-//                                                                               //
-// packages/promise/server.js                                                    //
-//                                                                               //
-///////////////////////////////////////////////////////////////////////////////////
-                                                                                 //
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// packages/promise/client.js                                              //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+                                                                           //
 require("./extensions.js");
+require("meteor-promise").makeCompatible(Promise);
 
-require("meteor-promise").makeCompatible(
-  Promise,
-  // Allow every Promise callback to run in a Fiber drawn from a pool of
-  // reusable Fibers.
-  require("fibers")
-);
-
-// Reference: https://caniuse.com/#feat=promises
-require("meteor/modern-browsers").setMinimumBrowserVersions({
-  chrome: 32,
-  edge: 12,
-  // Since there is no IE11, this effectively excludes Internet Explorer
-  // (pre-Edge) from the modern classification. #9818 #9839
-  ie: 12,
-  firefox: 29,
-  mobileSafari: 8,
-  opera: 20,
-  safari: [7, 1],
-  // https://github.com/Kilian/electron-to-chromium/blob/master/full-versions.js
-  electron: [0, 20],
-}, module.id);
-
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 },"extensions.js":function module(){
 
-///////////////////////////////////////////////////////////////////////////////////
-//                                                                               //
-// packages/promise/extensions.js                                                //
-//                                                                               //
-///////////////////////////////////////////////////////////////////////////////////
-                                                                                 //
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// packages/promise/extensions.js                                          //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+                                                                           //
 var proto = Promise.prototype;
 var hasOwn = Object.prototype.hasOwnProperty;
 
@@ -107,34 +96,55 @@ if (! hasOwn.call(proto, "finally")) {
   };
 }
 
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 },"node_modules":{"meteor-promise":{"package.json":function module(require,exports,module){
 
-///////////////////////////////////////////////////////////////////////////////////
-//                                                                               //
-// node_modules/meteor/promise/node_modules/meteor-promise/package.json          //
-//                                                                               //
-///////////////////////////////////////////////////////////////////////////////////
-                                                                                 //
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// node_modules/meteor/promise/node_modules/meteor-promise/package.json    //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+                                                                           //
 module.exports = {
   "name": "meteor-promise",
   "version": "0.8.7",
+  "browser": "promise_client.js",
   "main": "promise_server.js"
 };
 
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
-},"promise_server.js":function module(require,exports,module){
+},"promise_client.js":function module(require,exports){
 
-///////////////////////////////////////////////////////////////////////////////////
-//                                                                               //
-// node_modules/meteor/promise/node_modules/meteor-promise/promise_server.js     //
-//                                                                               //
-///////////////////////////////////////////////////////////////////////////////////
-                                                                                 //
-module.useNode();
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// node_modules/meteor/promise/node_modules/meteor-promise/promise_client. //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
+                                                                           //
+exports.makeCompatible = function (Promise) {
+  var es6PromiseThen = Promise.prototype.then;
+
+  Promise.prototype.then = function (onResolved, onRejected) {
+    if (typeof Meteor === "object" &&
+        typeof Meteor.bindEnvironment === "function") {
+      return es6PromiseThen.call(
+        this,
+        onResolved && Meteor.bindEnvironment(onResolved, raise),
+        onRejected && Meteor.bindEnvironment(onRejected, raise)
+      );
+    }
+
+    return es6PromiseThen.call(this, onResolved, onRejected);
+  };
+};
+
+function raise(exception) {
+  throw exception;
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 }}}}}}},{
   "extensions": [
@@ -144,7 +154,7 @@ module.useNode();
 });
 
 require("/node_modules/meteor/promise/modern.js");
-var exports = require("/node_modules/meteor/promise/server.js");
+var exports = require("/node_modules/meteor/promise/client.js");
 
 /* Exports */
 Package._define("promise", exports, {

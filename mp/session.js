@@ -14,25 +14,33 @@
 var Meteor = Package.meteor.Meteor;
 var global = Package.meteor.global;
 var meteorEnv = Package.meteor.meteorEnv;
+var ReactiveDict = Package['reactive-dict'].ReactiveDict;
+var EJSON = Package.ejson.EJSON;
 var meteorInstall = Package.modules.meteorInstall;
 var Promise = Package.promise.Promise;
 
 /* Package-scope variables */
-var fetch;
+var Session;
 
-var require = meteorInstall({"node_modules":{"meteor":{"fetch":{"modern.js":function module(require,exports){
+var require = meteorInstall({"node_modules":{"meteor":{"session":{"session.js":function module(require,exports,module){
 
 ///////////////////////////////////////////////////////////////////////
 //                                                                   //
-// packages/fetch/modern.js                                          //
+// packages/session/session.js                                       //
 //                                                                   //
 ///////////////////////////////////////////////////////////////////////
                                                                      //
-exports.fetch = global.fetch;
-exports.Headers = global.Headers;
-exports.Request = global.Request;
-exports.Response = global.Response;
+module.export({
+  Session: () => Session
+});
+let ReactiveDict;
+module.link("meteor/reactive-dict", {
+  ReactiveDict(v) {
+    ReactiveDict = v;
+  }
 
+}, 0);
+const Session = new ReactiveDict('session');
 ///////////////////////////////////////////////////////////////////////
 
 }}}}},{
@@ -42,11 +50,11 @@ exports.Response = global.Response;
   ]
 });
 
-var exports = require("/node_modules/meteor/fetch/modern.js");
+var exports = require("/node_modules/meteor/session/session.js");
 
 /* Exports */
-Package._define("fetch", exports, {
-  fetch: fetch
+Package._define("session", exports, {
+  Session: Session
 });
 
 })();

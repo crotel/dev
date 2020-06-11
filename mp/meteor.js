@@ -1,3 +1,13 @@
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// This is a generated file. You can view the original                  //
+// source in your browser if your browser supports source maps.         //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+
+
 (function () {
 
 /* Package-scope variables */
@@ -5,16 +15,16 @@ var global, meteorEnv, Meteor;
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/global.js                                                                                       //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/global.js                                                                            //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 // Export a reliable global object for all Meteor code.
 global = this;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -25,65 +35,93 @@ global = this;
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/server_environment.js                                                                           //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
-meteorEnv = {
-  NODE_ENV: process.env.NODE_ENV || "production",
-  TEST_METADATA: process.env.TEST_METADATA || "{}"
-};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/client_environment.js                                                                //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
+var config = __meteor_runtime_config__;
+meteorEnv = config.meteorEnv;
 
-const config = typeof __meteor_runtime_config__ === "object" &&
-  __meteor_runtime_config__;
-
-if (config) {
-  config.meteorEnv = meteorEnv;
-}
-
+/**
+ * @summary The Meteor namespace
+ * @namespace Meteor
+ */
 Meteor = {
+  /**
+   * @summary Boolean variable.  True if running in production environment.
+   * @locus Anywhere
+   * @static
+   * @type {Boolean}
+   */
   isProduction: meteorEnv.NODE_ENV === "production",
+
+  /**
+   * @summary Boolean variable.  True if running in development environment.
+   * @locus Anywhere
+   * @static
+   * @type {Boolean}
+   */
   isDevelopment: meteorEnv.NODE_ENV !== "production",
-  isClient: false,
-  isServer: true,
+
+  /**
+   * @summary Boolean variable.  True if running in client environment.
+   * @locus Anywhere
+   * @static
+   * @type {Boolean}
+   */
+  isClient: true,
+
+  /**
+   * @summary Boolean variable.  True if running in server environment.
+   * @locus Anywhere
+   * @static
+   * @type {Boolean}
+   */
+  isServer: false,
+
+  /**
+   * @summary Boolean variable.  True if running in Cordova environment.
+   * @locus Anywhere
+   * @static
+   * @type {Boolean}
+   */
   isCordova: false,
-  // Server code runs in Node 8+, which is decidedly "modern" by any
-  // reasonable definition.
-  isModern: true
+
+  /**
+   * @summary Boolean variable. True if running in a "modern" JS
+   *          environment, as determined by the `modern` package.
+   * @locus Anywhere
+   * @static
+   * @type {Boolean}
+   */
+  isModern: config.isModern
 };
 
-Meteor.settings = {};
-
-if (process.env.METEOR_SETTINGS) {
-  try {
-    Meteor.settings = JSON.parse(process.env.METEOR_SETTINGS);
-  } catch (e) {
-    throw new Error("METEOR_SETTINGS are not valid JSON.");
-  }
-}
-
-// Make sure that there is always a public attribute
-// to enable Meteor.settings.public on client
-if (! Meteor.settings.public) {
-    Meteor.settings.public = {};
-}
-
-// Push a subset of settings to the client.  Note that the way this
-// code is written, if the app mutates `Meteor.settings.public` on the
-// server, it also mutates
-// `__meteor_runtime_config__.PUBLIC_SETTINGS`, and the modified
-// settings will be sent to the client.
-if (config) {
-  config.PUBLIC_SETTINGS = Meteor.settings.public;
-}
-
-if (config && config.gitCommitHash) {
+if (config.gitCommitHash) {
+  /**
+   * @summary Hexadecimal Git commit hash, if the application is using Git
+   *          for version control. Undefined otherwise.
+   * @locus Anywhere
+   * @static
+   * @type {String}
+   */
   Meteor.gitCommitHash = config.gitCommitHash;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+if (config.PUBLIC_SETTINGS) {
+  /**
+   * @summary `Meteor.settings` contains deployment-specific configuration options. You can initialize settings by passing the `--settings` option (which takes the name of a file containing JSON data) to `meteor run` or `meteor deploy`. When running your server directly (e.g. from a bundle), you instead specify settings by putting the JSON directly into the `METEOR_SETTINGS` environment variable. If the settings object contains a key named `public`, then `Meteor.settings.public` will be available on the client as well as the server.  All other properties of `Meteor.settings` are only defined on the server.  You can rely on `Meteor.settings` and `Meteor.settings.public` being defined objects (not undefined) on both client and server even if there are no settings specified.  Changes to `Meteor.settings.public` at runtime will be picked up by new client connections.
+   * @locus Anywhere
+   * @type {Object}
+   */
+  Meteor.settings = {
+    "public": config.PUBLIC_SETTINGS
+  };
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -94,12 +132,12 @@ if (config && config.gitCommitHash) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/define-package.js                                                                               //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/define-package.js                                                                    //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 function PackageRegistry() {
   this._promiseInfoMap = Object.create(null);
 }
@@ -170,7 +208,7 @@ if (typeof exports === "object") {
   exports.PackageRegistry = PackageRegistry;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -181,12 +219,12 @@ if (typeof exports === "object") {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/helpers.js                                                                                      //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/helpers.js                                                                           //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 if (Meteor.isServer)
   var Future = Npm.require('fibers/future');
 
@@ -356,7 +394,7 @@ function logErr(err) {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -367,12 +405,12 @@ function logErr(err) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/setimmediate.js                                                                                 //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/setimmediate.js                                                                      //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 // Chooses one of three setImmediate implementations:
 //
 // * Native setImmediate (IE 10, Node 0.9+)
@@ -515,7 +553,7 @@ Meteor._setImmediate =
   usePostMessage() ||
   useTimeout();
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -526,12 +564,12 @@ Meteor._setImmediate =
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/timers.js                                                                                       //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/timers.js                                                                            //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 function withoutInvocation(f) {
   if (Package.ddp) {
     var DDP = Package.ddp.DDP;
@@ -619,7 +657,7 @@ Meteor.defer = function (f) {
   Meteor._setImmediate(bindAndCatch("defer callback", f));
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -630,12 +668,12 @@ Meteor.defer = function (f) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/errors.js                                                                                       //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/errors.js                                                                            //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 // Makes an error subclass which properly contains a stack trace in most
 // environments. constructor can set fields on `this` (and should probably set
 // `message`, which is what gets displayed at the top of a stack trace).
@@ -749,7 +787,7 @@ Meteor.Error.prototype.clone = function () {
   return new Meteor.Error(self.error, self.reason, self.details);
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -760,103 +798,79 @@ Meteor.Error.prototype.clone = function () {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/fiber_helpers.js                                                                                //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
-var Fiber = Npm.require('fibers');
-var Future = Npm.require('fibers/future');
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/fiber_stubs_client.js                                                                //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
+// This file is a partial analogue to fiber_helpers.js, which allows the client
+// to use a queue too, and also to call noYieldsAllowed.
 
+// The client has no ability to yield, so noYieldsAllowed is a noop.
+//
 Meteor._noYieldsAllowed = function (f) {
-  var savedYield = Fiber.yield;
-  Fiber.yield = function () {
-    throw new Error("Can't call yield in a noYieldsAllowed block!");
-  };
-  try {
-    return f();
-  } finally {
-    Fiber.yield = savedYield;
-  }
+  return f();
 };
 
-Meteor._DoubleEndedQueue = Npm.require('meteor-deque');
-
-// Meteor._SynchronousQueue is a queue which runs task functions serially.
-// Tasks are assumed to be synchronous: ie, it's assumed that they are
-// done when they return.
-//
-// It has two methods:
-//   - queueTask queues a task to be run, and returns immediately.
-//   - runTask queues a task to be run, and then yields. It returns
-//     when the task finishes running.
-//
-// It's safe to call queueTask from within a task, but not runTask (unless
-// you're calling runTask from a nested Fiber).
-//
-// Somewhat inspired by async.queue, but specific to blocking tasks.
-// XXX break this out into an NPM module?
-// XXX could maybe use the npm 'schlock' module instead, which would
-//     also support multiple concurrent "read" tasks
+// An even simpler queue of tasks than the fiber-enabled one.  This one just
+// runs all the tasks when you call runTask or flush, synchronously.
 //
 Meteor._SynchronousQueue = function () {
   var self = this;
-  // List of tasks to run (not including a currently-running task if any). Each
-  // is an object with field 'task' (the task function to run) and 'future' (the
-  // Future associated with the blocking runTask call that queued it, or null if
-  // called from queueTask).
-  self._taskHandles = new Meteor._DoubleEndedQueue();
-  // This is true if self._run() is either currently executing or scheduled to
-  // do so soon.
-  self._runningOrRunScheduled = false;
-  // During the execution of a task, this is set to the fiber used to execute
-  // that task. We use this to throw an error rather than deadlocking if the
-  // user calls runTask from within a task on the same fiber.
-  self._currentTaskFiber = undefined;
-  // This is true if we're currently draining.  While we're draining, a further
-  // drain is a noop, to prevent infinite loops.  "drain" is a heuristic type
-  // operation, that has a meaning like unto "what a naive person would expect
-  // when modifying a table from an observe"
-  self._draining = false;
+  self._tasks = [];
+  self._running = false;
+  self._runTimeout = null;
 };
 
 var SQp = Meteor._SynchronousQueue.prototype;
 
 SQp.runTask = function (task) {
   var self = this;
+  if (!self.safeToRunTask())
+    throw new Error("Could not synchronously run a task from a running task");
+  self._tasks.push(task);
+  var tasks = self._tasks;
+  self._tasks = [];
+  self._running = true;
 
-  if (!self.safeToRunTask()) {
-    if (Fiber.current)
-      throw new Error("Can't runTask from another task in the same fiber");
-    else
-      throw new Error("Can only call runTask in a Fiber");
+  if (self._runTimeout) {
+    // Since we're going to drain the queue, we can forget about the timeout
+    // which tries to run it.  (But if one of our tasks queues something else,
+    // the timeout will be correctly re-created.)
+    clearTimeout(self._runTimeout);
+    self._runTimeout = null;
   }
 
-  var fut = new Future;
-  var handle = {
-    task: Meteor.bindEnvironment(task, function (e) {
-      Meteor._debug("Exception from task", e);
-      throw e;
-    }),
-    future: fut,
-    name: task.name
-  };
-  self._taskHandles.push(handle);
-  self._scheduleRun();
-  // Yield. We'll get back here after the task is run (and will throw if the
-  // task throws).
-  fut.wait();
+  try {
+    while (tasks.length > 0) {
+      var t = tasks.shift();
+      try {
+        t();
+      } catch (e) {
+        if (tasks.length === 0) {
+          // this was the last task, that is, the one we're calling runTask
+          // for.
+          throw e;
+        }
+        Meteor._debug("Exception in queued task", e);
+      }
+    }
+  } finally {
+    self._running = false;
+  }
 };
 
 SQp.queueTask = function (task) {
   var self = this;
-  self._taskHandles.push({
-    task: task,
-    name: task.name
-  });
-  self._scheduleRun();
-  // No need to block.
+  self._tasks.push(task);
+  // Intentionally not using Meteor.setTimeout, because it doesn't like runing
+  // in stubs for now.
+  if (!self._runTimeout) {
+    self._runTimeout = setTimeout(function () {
+      return self.flush.apply(self, arguments);
+    }, 0);
+  }
 };
 
 SQp.flush = function () {
@@ -864,93 +878,22 @@ SQp.flush = function () {
   self.runTask(function () {});
 };
 
-SQp.safeToRunTask = function () {
-  var self = this;
-  return Fiber.current && self._currentTaskFiber !== Fiber.current;
-};
-
 SQp.drain = function () {
   var self = this;
-  if (self._draining)
+  if (!self.safeToRunTask()) {
     return;
-  if (!self.safeToRunTask())
-    return;
-  self._draining = true;
-  while (! self._taskHandles.isEmpty()) {
+  }
+  while (self._tasks.length > 0) {
     self.flush();
   }
-  self._draining = false;
 };
 
-SQp._scheduleRun = function () {
+SQp.safeToRunTask = function () {
   var self = this;
-  // Already running or scheduled? Do nothing.
-  if (self._runningOrRunScheduled)
-    return;
-
-  self._runningOrRunScheduled = true;
-  setImmediate(function () {
-    Fiber(function () {
-      self._run();
-    }).run();
-  });
+  return !self._running;
 };
 
-SQp._run = function () {
-  var self = this;
-
-  if (!self._runningOrRunScheduled)
-    throw new Error("expected to be _runningOrRunScheduled");
-
-  if (self._taskHandles.isEmpty()) {
-    // Done running tasks! Don't immediately schedule another run, but
-    // allow future tasks to do so.
-    self._runningOrRunScheduled = false;
-    return;
-  }
-  var taskHandle = self._taskHandles.shift();
-
-  // Run the task.
-  self._currentTaskFiber = Fiber.current;
-  var exception = undefined;
-  try {
-    taskHandle.task();
-  } catch (err) {
-    if (taskHandle.future) {
-      // We'll throw this exception through runTask.
-      exception = err;
-    } else {
-      Meteor._debug("Exception in queued task", err);
-    }
-  }
-  self._currentTaskFiber = undefined;
-
-  // Soon, run the next task, if there is any.
-  self._runningOrRunScheduled = false;
-  self._scheduleRun();
-
-  // If this was queued with runTask, let the runTask call return (throwing if
-  // the task threw).
-  if (taskHandle.future) {
-    if (exception)
-      taskHandle.future['throw'](exception);
-    else
-      taskHandle.future['return']();
-  }
-};
-
-// Sleep. Mostly used for debugging (eg, inserting latency into server
-// methods).
-//
-Meteor._sleepForMs = function (ms) {
-  var fiber = Fiber.current;
-  setTimeout(function() {
-    fiber.run();
-  }, ms);
-  Fiber.yield();
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -961,39 +904,102 @@ Meteor._sleepForMs = function (ms) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/startup_server.js                                                                               //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
-Meteor.startup = function startup(callback) {
-  if (process.env.METEOR_PROFILE) {
-    // Create a temporary error to capture the current stack trace.
-    var error = new Error("Meteor.startup");
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/startup_client.js                                                                    //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
+var callbackQueue = [];
+var isLoadingCompleted = false;
+var isReady = false;
 
-    // Capture the stack trace of the Meteor.startup call, excluding the
-    // startup stack frame itself.
-    Error.captureStackTrace(error, startup);
+// Keeps track of how many events to wait for in addition to loading completing,
+// before we're considered ready.
+var readyHoldsCount = 0;
 
-    callback.stack = error.stack
-      .split(/\n\s*/) // Split lines and remove leading whitespace.
-      .slice(0, 2) // Only include the call site.
-      .join(" ") // Collapse to one line.
-      .replace(/^Error: /, ""); // Not really an Error per se.
+var holdReady =  function () {
+  readyHoldsCount++;
+}
+
+var releaseReadyHold = function () {
+  readyHoldsCount--;
+  maybeReady();
+}
+
+var maybeReady = function () {
+  if (isReady || !isLoadingCompleted || readyHoldsCount > 0)
+    return;
+
+  isReady = true;
+
+  // Run startup callbacks
+  while (callbackQueue.length)
+    (callbackQueue.shift())();
+
+  if (Meteor.isCordova) {
+    // Notify the WebAppLocalServer plugin that startup was completed successfully,
+    // so we can roll back faulty versions if this doesn't happen
+    WebAppLocalServer.startupDidComplete();
   }
+};
 
-  var bootstrap = global.__meteor_bootstrap__;
-  if (bootstrap &&
-      bootstrap.startupHooks) {
-    bootstrap.startupHooks.push(callback);
+var loadingCompleted = function () {
+  if (!isLoadingCompleted) {
+    isLoadingCompleted = true;
+    maybeReady();
+  }
+}
+
+if (Meteor.isCordova) {
+  holdReady();
+  document.addEventListener('deviceready', releaseReadyHold, false);
+}
+
+if (document.readyState === 'complete' || document.readyState === 'loaded') {
+  // Loading has completed,
+  // but allow other scripts the opportunity to hold ready
+  window.setTimeout(loadingCompleted);
+} else { // Attach event listeners to wait for loading to complete
+  if (document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', loadingCompleted, false);
+    window.addEventListener('load', loadingCompleted, false);
+  } else { // Use IE event model for < IE9
+    document.attachEvent('onreadystatechange', function () {
+      if (document.readyState === "complete") {
+        loadingCompleted();
+      }
+    });
+    window.attachEvent('load', loadingCompleted);
+  }
+}
+
+/**
+ * @summary Run code when a client or a server starts.
+ * @locus Anywhere
+ * @param {Function} func A function to run on startup.
+ */
+Meteor.startup = function (callback) {
+  // Fix for < IE9, see http://javascript.nwbox.com/IEContentLoaded/
+  var doScroll = !document.addEventListener &&
+    document.documentElement.doScroll;
+
+  if (!doScroll || window !== top) {
+    if (isReady)
+      callback();
+    else
+      callbackQueue.push(callback);
   } else {
-    // We already started up. Just call it now.
+    try { doScroll('left'); }
+    catch (error) {
+      setTimeout(function () { Meteor.startup(callback); }, 50);
+      return;
+    };
     callback();
   }
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -1004,12 +1010,12 @@ Meteor.startup = function startup(callback) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/debug.js                                                                                        //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/debug.js                                                                             //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 var suppress = 0;
 
 // replacement for console.log. This is a temporary API. We should
@@ -1078,7 +1084,7 @@ Meteor._suppressed_log_expected = function () {
 };
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -1089,12 +1095,12 @@ Meteor._suppressed_log_expected = function () {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/string_utils.js                                                                                 //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/string_utils.js                                                                      //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 // Like Perl's quotemeta: quotes all regexp metacharacters.
 // Code taken from
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
@@ -1102,7 +1108,7 @@ Meteor._escapeRegExp = function (string) {
     return String(string).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -1113,12 +1119,12 @@ Meteor._escapeRegExp = function (string) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/test_environment.js                                                                             //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/test_environment.js                                                                  //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 var TEST_METADATA_STR;
 if (Meteor.isClient) {
   TEST_METADATA_STR = meteorEnv.TEST_METADATA;
@@ -1158,7 +1164,7 @@ if (typeof testDriverPackageName === "string") {
   });
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -1169,25 +1175,16 @@ if (typeof testDriverPackageName === "string") {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/dynamics_nodejs.js                                                                              //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
-// Fiber-aware implementation of dynamic scoping, for use on the server
-
-var Fiber = Npm.require('fibers');
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/dynamics_browser.js                                                                  //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
+// Simple implementation of dynamic scoping, for use in browsers
 
 var nextSlot = 0;
-
-Meteor._nodeCodeMustBeInFiber = function () {
-  if (!Fiber.current) {
-    throw new Error("Meteor code must always run within a Fiber. " +
-                    "Try wrapping callbacks that you pass to non-Meteor " +
-                    "libraries with Meteor.bindEnvironment.");
-  }
-};
+var currentValues = [];
 
 Meteor.EnvironmentVariable = function () {
   this.slot = nextSlot++;
@@ -1196,71 +1193,29 @@ Meteor.EnvironmentVariable = function () {
 var EVp = Meteor.EnvironmentVariable.prototype;
 
 EVp.get = function () {
-  Meteor._nodeCodeMustBeInFiber();
-
-  return Fiber.current._meteor_dynamics &&
-    Fiber.current._meteor_dynamics[this.slot];
+  return currentValues[this.slot];
 };
 
-// Most Meteor code ought to run inside a fiber, and the
-// _nodeCodeMustBeInFiber assertion helps you remember to include appropriate
-// bindEnvironment calls (which will get you the *right value* for your
-// environment variables, on the server).
-//
-// In some very special cases, it's more important to run Meteor code on the
-// server in non-Fiber contexts rather than to strongly enforce the safeguard
-// against forgetting to use bindEnvironment. For example, using `check` in
-// some top-level constructs like connect handlers without needing unnecessary
-// Fibers on every request is more important that possibly failing to find the
-// correct argumentChecker. So this function is just like get(), but it
-// returns null rather than throwing when called from outside a Fiber. (On the
-// client, it is identical to get().)
 EVp.getOrNullIfOutsideFiber = function () {
-  if (!Fiber.current)
-    return null;
   return this.get();
 };
 
 EVp.withValue = function (value, func) {
-  Meteor._nodeCodeMustBeInFiber();
-
-  if (!Fiber.current._meteor_dynamics)
-    Fiber.current._meteor_dynamics = [];
-  var currentValues = Fiber.current._meteor_dynamics;
-
   var saved = currentValues[this.slot];
   try {
     currentValues[this.slot] = value;
-    return func();
+    var ret = func();
   } finally {
     currentValues[this.slot] = saved;
   }
+  return ret;
 };
 
-// Meteor application code is always supposed to be run inside a
-// fiber. bindEnvironment ensures that the function it wraps is run from
-// inside a fiber and ensures it sees the values of Meteor environment
-// variables that are set at the time bindEnvironment is called.
-//
-// If an environment-bound function is called from outside a fiber (eg, from
-// an asynchronous callback from a non-Meteor library such as MongoDB), it'll
-// kick off a new fiber to execute the function, and returns undefined as soon
-// as that fiber returns or yields (and func's return value is ignored).
-//
-// If it's called inside a fiber, it works normally (the
-// return value of the function will be passed through, and no new
-// fiber will be created.)
-//
-// `onException` should be a function or a string.  When it is a
-// function, it is called as a callback when the bound function raises
-// an exception.  If it is a string, it should be a description of the
-// callback, and when an exception is raised a debug message will be
-// printed with the description.
 Meteor.bindEnvironment = function (func, onException, _this) {
-  Meteor._nodeCodeMustBeInFiber();
-
-  var dynamics = Fiber.current._meteor_dynamics;
-  var boundValues = dynamics ? dynamics.slice() : [];
+  // needed in order to be able to create closures inside func and
+  // have the closed variables not change back to their original
+  // values
+  var boundValues = currentValues.slice();
 
   if (!onException || typeof(onException) === 'string') {
     var description = onException || "callback of async function";
@@ -1270,38 +1225,29 @@ Meteor.bindEnvironment = function (func, onException, _this) {
         error
       );
     };
-  } else if (typeof(onException) !== 'function') {
-    throw new Error('onException argument must be a function, string or undefined for Meteor.bindEnvironment().');
   }
 
   return function (/* arguments */) {
-    var args = Array.prototype.slice.call(arguments);
-
-    var runWithEnvironment = function () {
-      var savedValues = Fiber.current._meteor_dynamics;
-      try {
-        // Need to clone boundValues in case two fibers invoke this
-        // function at the same time
-        Fiber.current._meteor_dynamics = boundValues.slice();
-        var ret = func.apply(_this, args);
-      } catch (e) {
-        // note: callback-hook currently relies on the fact that if onException
-        // throws and you were originally calling the wrapped callback from
-        // within a Fiber, the wrapped call throws.
-        onException(e);
-      } finally {
-        Fiber.current._meteor_dynamics = savedValues;
-      }
-      return ret;
-    };
-
-    if (Fiber.current)
-      return runWithEnvironment();
-    Fiber(runWithEnvironment).run();
+    var savedValues = currentValues;
+    try {
+      currentValues = boundValues;
+      var ret = func.apply(_this, arguments);
+    } catch (e) {
+      // note: callback-hook currently relies on the fact that if onException
+      // throws in the browser, the wrapped call throws.
+      onException(e);
+    } finally {
+      currentValues = savedValues;
+    }
+    return ret;
   };
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Meteor._nodeCodeMustBeInFiber = function () {
+  // no-op on browser
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 
@@ -1312,49 +1258,12 @@ Meteor.bindEnvironment = function (func, onException, _this) {
 
 (function(){
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/url_server.js                                                                                   //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
-if (process.env.ROOT_URL &&
-    typeof __meteor_runtime_config__ === "object") {
-  __meteor_runtime_config__.ROOT_URL = process.env.ROOT_URL;
-  if (__meteor_runtime_config__.ROOT_URL) {
-    var parsedUrl = Npm.require('url').parse(__meteor_runtime_config__.ROOT_URL);
-    // Sometimes users try to pass, eg, ROOT_URL=mydomain.com.
-    if (!parsedUrl.host || ['http:', 'https:'].indexOf(parsedUrl.protocol) === -1) {
-      throw Error("$ROOT_URL, if specified, must be an URL");
-    }
-    var pathPrefix = parsedUrl.pathname;
-    if (pathPrefix.slice(-1) === '/') {
-      // remove trailing slash (or turn "/" into "")
-      pathPrefix = pathPrefix.slice(0, -1);
-    }
-    __meteor_runtime_config__.ROOT_URL_PATH_PREFIX = pathPrefix;
-  } else {
-    __meteor_runtime_config__.ROOT_URL_PATH_PREFIX = "";
-  }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-}).call(this);
-
-
-
-
-
-
-(function(){
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/url_common.js                                                                                   //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                      //
+// packages/meteor/url_common.js                                                                        //
+//                                                                                                      //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                        //
 /**
  * @summary Generate an absolute URL pointing to the application. The server reads from the `ROOT_URL` environment variable to determine where it is running. This is taken care of automatically for apps deployed to Galaxy, but must be provided when using `meteor build`.
  * @locus Anywhere
@@ -1436,64 +1345,7 @@ Meteor._relativeToSiteRootUrl = function (link) {
   return link;
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-}).call(this);
-
-
-
-
-
-
-(function(){
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                 //
-// packages/meteor/flush-buffers-on-exit-in-windows.js                                                             //
-//                                                                                                                 //
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                   //
-if (process.platform === "win32") {
-  /*
-   * Based on https://github.com/cowboy/node-exit
-   *
-   * Copyright (c) 2013 "Cowboy" Ben Alman
-   * Licensed under the MIT license.
-   */
-  var origProcessExit = process.exit.bind(process);
-  process.exit = function (exitCode) {
-    var streams = [process.stdout, process.stderr];
-    var drainCount = 0;
-    // Actually exit if all streams are drained.
-    function tryToExit() {
-      if (drainCount === streams.length) {
-        origProcessExit(exitCode);
-      }
-    }
-    streams.forEach(function(stream) {
-      // Count drained streams now, but monitor non-drained streams.
-      if (stream.bufferSize === 0) {
-        drainCount++;
-      } else {
-        stream.write('', 'utf-8', function() {
-          drainCount++;
-          tryToExit();
-        });
-      }
-      // Prevent further writing.
-      stream.write = function() {};
-    });
-    // If all streams were already drained, exit now.
-    tryToExit();
-    // In Windows, when run as a Node.js child process, a script utilizing
-    // this library might just exit with a 0 exit code, regardless. This code,
-    // despite the fact that it looks a bit crazy, appears to fix that.
-    process.on('exit', function() {
-      origProcessExit(exitCode);
-    });
-  };
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }).call(this);
 

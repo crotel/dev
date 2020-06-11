@@ -1,276 +1,259 @@
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// This is a generated file. You can view the original                  //
+// source in your browser if your browser supports source maps.         //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+
+
 (function () {
 
 /* Imports */
 var Meteor = Package.meteor.Meteor;
 var global = Package.meteor.global;
 var meteorEnv = Package.meteor.meteorEnv;
-var ECMAScript = Package.ecmascript.ECMAScript;
 var Retry = Package.retry.Retry;
 var meteorInstall = Package.modules.meteorInstall;
 var Promise = Package.promise.Promise;
 
 /* Package-scope variables */
-var options;
+var options, SockJS;
 
-var require = meteorInstall({"node_modules":{"meteor":{"socket-stream-client":{"server.js":function module(require,exports,module){
+var require = meteorInstall({"node_modules":{"meteor":{"socket-stream-client":{"browser.js":function module(require,exports,module){
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                //
-// packages/socket-stream-client/server.js                                                                        //
-//                                                                                                                //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                  //
-!function (module1) {
-  let setMinimumBrowserVersions;
-  module1.link("meteor/modern-browsers", {
-    setMinimumBrowserVersions(v) {
-      setMinimumBrowserVersions = v;
-    }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                     //
+// packages/socket-stream-client/browser.js                                                                            //
+//                                                                                                                     //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                       //
+let _objectSpread;
 
-  }, 0);
-  setMinimumBrowserVersions({
-    chrome: 16,
-    edge: 12,
-    firefox: 11,
-    ie: 10,
-    mobileSafari: [6, 1],
-    phantomjs: 2,
-    safari: 7,
-    electron: [0, 20]
-  }, module.id);
-}.call(this, module);
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-},"node.js":function module(require,exports,module){
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                //
-// packages/socket-stream-client/node.js                                                                          //
-//                                                                                                                //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                  //
-!function (module1) {
-  module1.export({
-    ClientStream: () => ClientStream
-  });
-  let Meteor;
-  module1.link("meteor/meteor", {
-    Meteor(v) {
-      Meteor = v;
-    }
-
-  }, 0);
-  let toWebsocketUrl;
-  module1.link("./urls.js", {
-    toWebsocketUrl(v) {
-      toWebsocketUrl = v;
-    }
-
-  }, 1);
-  let StreamClientCommon;
-  module1.link("./common.js", {
-    StreamClientCommon(v) {
-      StreamClientCommon = v;
-    }
-
-  }, 2);
-
-  class ClientStream extends StreamClientCommon {
-    constructor(endpoint, options) {
-      super(options);
-      this.client = null; // created in _launchConnection
-
-      this.endpoint = endpoint;
-      this.headers = this.options.headers || Object.create(null);
-      this.npmFayeOptions = this.options.npmFayeOptions || Object.create(null);
-
-      this._initCommon(this.options); //// Kickoff!
-
-
-      this._launchConnection();
-    } // data is a utf8 string. Data sent while not connected is dropped on
-    // the floor, and it is up the user of this API to retransmit lost
-    // messages on 'reset'
-
-
-    send(data) {
-      if (this.currentStatus.connected) {
-        this.client.send(data);
-      }
-    } // Changes where this connection points
-
-
-    _changeUrl(url) {
-      this.endpoint = url;
-    }
-
-    _onConnect(client) {
-      if (client !== this.client) {
-        // This connection is not from the last call to _launchConnection.
-        // But _launchConnection calls _cleanup which closes previous connections.
-        // It's our belief that this stifles future 'open' events, but maybe
-        // we are wrong?
-        throw new Error('Got open from inactive client ' + !!this.client);
-      }
-
-      if (this._forcedToDisconnect) {
-        // We were asked to disconnect between trying to open the connection and
-        // actually opening it. Let's just pretend this never happened.
-        this.client.close();
-        this.client = null;
-        return;
-      }
-
-      if (this.currentStatus.connected) {
-        // We already have a connection. It must have been the case that we
-        // started two parallel connection attempts (because we wanted to
-        // 'reconnect now' on a hanging connection and we had no way to cancel the
-        // connection attempt.) But this shouldn't happen (similarly to the client
-        // !== this.client check above).
-        throw new Error('Two parallel connections?');
-      }
-
-      this._clearConnectionTimer(); // update status
-
-
-      this.currentStatus.status = 'connected';
-      this.currentStatus.connected = true;
-      this.currentStatus.retryCount = 0;
-      this.statusChanged(); // fire resets. This must come after status change so that clients
-      // can call send from within a reset callback.
-
-      this.forEachCallback('reset', callback => {
-        callback();
-      });
-    }
-
-    _cleanup(maybeError) {
-      this._clearConnectionTimer();
-
-      if (this.client) {
-        var client = this.client;
-        this.client = null;
-        client.close();
-        this.forEachCallback('disconnect', callback => {
-          callback(maybeError);
-        });
-      }
-    }
-
-    _clearConnectionTimer() {
-      if (this.connectionTimer) {
-        clearTimeout(this.connectionTimer);
-        this.connectionTimer = null;
-      }
-    }
-
-    _getProxyUrl(targetUrl) {
-      // Similar to code in tools/http-helpers.js.
-      var proxy = process.env.HTTP_PROXY || process.env.http_proxy || null;
-      var noproxy = process.env.NO_PROXY || process.env.no_proxy || null; // if we're going to a secure url, try the https_proxy env variable first.
-
-      if (targetUrl.match(/^wss:/) || targetUrl.match(/^https:/)) {
-        proxy = process.env.HTTPS_PROXY || process.env.https_proxy || proxy;
-      }
-
-      if (targetUrl.indexOf('localhost') != -1 || targetUrl.indexOf('127.0.0.1') != -1) {
-        return null;
-      }
-
-      if (noproxy) {
-        for (let item of noproxy.split(',')) {
-          if (targetUrl.indexOf(item.trim().replace(/\*/, '')) !== -1) {
-            proxy = null;
-          }
-        }
-      }
-
-      return proxy;
-    }
-
-    _launchConnection() {
-      var _this = this;
-
-      this._cleanup(); // cleanup the old socket, if there was one.
-      // Since server-to-server DDP is still an experimental feature, we only
-      // require the module if we actually create a server-to-server
-      // connection.
-
-
-      var FayeWebSocket = Npm.require('faye-websocket');
-
-      var deflate = Npm.require('permessage-deflate');
-
-      var targetUrl = toWebsocketUrl(this.endpoint);
-      var fayeOptions = {
-        headers: this.headers,
-        extensions: [deflate]
-      };
-      fayeOptions = Object.assign(fayeOptions, this.npmFayeOptions);
-
-      var proxyUrl = this._getProxyUrl(targetUrl);
-
-      if (proxyUrl) {
-        fayeOptions.proxy = {
-          origin: proxyUrl
-        };
-      } // We would like to specify 'ddp' as the subprotocol here. The npm module we
-      // used to use as a client would fail the handshake if we ask for a
-      // subprotocol and the server doesn't send one back (and sockjs doesn't).
-      // Faye doesn't have that behavior; it's unclear from reading RFC 6455 if
-      // Faye is erroneous or not.  So for now, we don't specify protocols.
-
-
-      var subprotocols = [];
-      var client = this.client = new FayeWebSocket.Client(targetUrl, subprotocols, fayeOptions);
-
-      this._clearConnectionTimer();
-
-      this.connectionTimer = Meteor.setTimeout(() => {
-        this._lostConnection(new this.ConnectionError('DDP connection timed out'));
-      }, this.CONNECT_TIMEOUT);
-      this.client.on('open', Meteor.bindEnvironment(() => {
-        return this._onConnect(client);
-      }, 'stream connect callback'));
-
-      var clientOnIfCurrent = (event, description, callback) => {
-        this.client.on(event, Meteor.bindEnvironment(function () {
-          // Ignore events from any connection we've already cleaned up.
-          if (client !== _this.client) return;
-          callback(...arguments);
-        }, description));
-      };
-
-      clientOnIfCurrent('error', 'stream error callback', error => {
-        if (!this.options._dontPrintErrors) Meteor._debug('stream error', error.message); // Faye's 'error' object is not a JS error (and among other things,
-        // doesn't stringify well). Convert it to one.
-
-        this._lostConnection(new this.ConnectionError(error.message));
-      });
-      clientOnIfCurrent('close', 'stream close callback', () => {
-        this._lostConnection();
-      });
-      clientOnIfCurrent('message', 'stream message callback', message => {
-        // Ignore binary frames, where message.data is a Buffer
-        if (typeof message.data !== 'string') return;
-        this.forEachCallback('message', callback => {
-          callback(message.data);
-        });
-      });
-    }
-
+module.link("@babel/runtime/helpers/objectSpread2", {
+  default(v) {
+    _objectSpread = v;
   }
-}.call(this, module);
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+}, 0);
+module.export({
+  ClientStream: () => ClientStream
+});
+let toSockjsUrl, toWebsocketUrl;
+module.link("./urls.js", {
+  toSockjsUrl(v) {
+    toSockjsUrl = v;
+  },
+
+  toWebsocketUrl(v) {
+    toWebsocketUrl = v;
+  }
+
+}, 0);
+let StreamClientCommon;
+module.link("./common.js", {
+  StreamClientCommon(v) {
+    StreamClientCommon = v;
+  }
+
+}, 1);
+module.link("./sockjs-0.3.4.js");
+
+class ClientStream extends StreamClientCommon {
+  // @param url {String} URL to Meteor app
+  //   "http://subdomain.meteor.com/" or "/" or
+  //   "ddp+sockjs://foo-**.meteor.com/sockjs"
+  constructor(url, options) {
+    super(options);
+
+    this._initCommon(this.options); //// Constants
+    // how long between hearing heartbeat from the server until we declare
+    // the connection dead. heartbeats come every 45s (stream_server.js)
+    //
+    // NOTE: this is a older timeout mechanism. We now send heartbeats at
+    // the DDP level (https://github.com/meteor/meteor/pull/1865), and
+    // expect those timeouts to kill a non-responsive connection before
+    // this timeout fires. This is kept around for compatibility (when
+    // talking to a server that doesn't support DDP heartbeats) and can be
+    // removed later.
+
+
+    this.HEARTBEAT_TIMEOUT = 100 * 1000;
+    this.rawUrl = url;
+    this.socket = null;
+    this.lastError = null;
+    this.heartbeatTimer = null; // Listen to global 'online' event if we are running in a browser.
+    // (IE8 does not support addEventListener)
+
+    if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('online', this._online.bind(this), false
+    /* useCapture. make FF3.6 happy. */
+    ); //// Kickoff!
+
+    this._launchConnection();
+  } // data is a utf8 string. Data sent while not connected is dropped on
+  // the floor, and it is up the user of this API to retransmit lost
+  // messages on 'reset'
+
+
+  send(data) {
+    if (this.currentStatus.connected) {
+      this.socket.send(data);
+    }
+  } // Changes where this connection points
+
+
+  _changeUrl(url) {
+    this.rawUrl = url;
+  }
+
+  _connected() {
+    if (this.connectionTimer) {
+      clearTimeout(this.connectionTimer);
+      this.connectionTimer = null;
+    }
+
+    if (this.currentStatus.connected) {
+      // already connected. do nothing. this probably shouldn't happen.
+      return;
+    } // update status
+
+
+    this.currentStatus.status = 'connected';
+    this.currentStatus.connected = true;
+    this.currentStatus.retryCount = 0;
+    this.statusChanged(); // fire resets. This must come after status change so that clients
+    // can call send from within a reset callback.
+
+    this.forEachCallback('reset', callback => {
+      callback();
+    });
+  }
+
+  _cleanup(maybeError) {
+    this._clearConnectionAndHeartbeatTimers();
+
+    if (this.socket) {
+      this.socket.onmessage = this.socket.onclose = this.socket.onerror = this.socket.onheartbeat = () => {};
+
+      this.socket.close();
+      this.socket = null;
+    }
+
+    this.forEachCallback('disconnect', callback => {
+      callback(maybeError);
+    });
+  }
+
+  _clearConnectionAndHeartbeatTimers() {
+    if (this.connectionTimer) {
+      clearTimeout(this.connectionTimer);
+      this.connectionTimer = null;
+    }
+
+    if (this.heartbeatTimer) {
+      clearTimeout(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  _heartbeat_timeout() {
+    console.log('Connection timeout. No sockjs heartbeat received.');
+
+    this._lostConnection(new this.ConnectionError("Heartbeat timed out"));
+  }
+
+  _heartbeat_received() {
+    // If we've already permanently shut down this stream, the timeout is
+    // already cleared, and we don't need to set it again.
+    if (this._forcedToDisconnect) return;
+    if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
+    this.heartbeatTimer = setTimeout(this._heartbeat_timeout.bind(this), this.HEARTBEAT_TIMEOUT);
+  }
+
+  _sockjsProtocolsWhitelist() {
+    // only allow polling protocols. no streaming.  streaming
+    // makes safari spin.
+    var protocolsWhitelist = ['xdr-polling', 'xhr-polling', 'iframe-xhr-polling', 'jsonp-polling']; // iOS 4 and 5 and below crash when using websockets over certain
+    // proxies. this seems to be resolved with iOS 6. eg
+    // https://github.com/LearnBoost/socket.io/issues/193#issuecomment-7308865.
+    //
+    // iOS <4 doesn't support websockets at all so sockjs will just
+    // immediately fall back to http
+
+    var noWebsockets = navigator && /iPhone|iPad|iPod/.test(navigator.userAgent) && /OS 4_|OS 5_/.test(navigator.userAgent);
+    if (!noWebsockets) protocolsWhitelist = ['websocket'].concat(protocolsWhitelist);
+    return protocolsWhitelist;
+  }
+
+  _launchConnection() {
+    this._cleanup(); // cleanup the old socket, if there was one.
+
+
+    var options = _objectSpread({
+      protocols_whitelist: this._sockjsProtocolsWhitelist()
+    }, this.options._sockjsOptions);
+
+    const hasSockJS = typeof SockJS === "function";
+    this.socket = hasSockJS // Convert raw URL to SockJS URL each time we open a connection, so
+    // that we can connect to random hostnames and get around browser
+    // per-host connection limits.
+    ? new SockJS(toSockjsUrl(this.rawUrl), undefined, options) : new WebSocket(toWebsocketUrl(this.rawUrl));
+
+    this.socket.onopen = data => {
+      this.lastError = null;
+
+      this._connected();
+    };
+
+    this.socket.onmessage = data => {
+      this.lastError = null;
+
+      this._heartbeat_received();
+
+      if (this.currentStatus.connected) {
+        this.forEachCallback('message', callback => {
+          callback(data.data);
+        });
+      }
+    };
+
+    this.socket.onclose = () => {
+      this._lostConnection();
+    };
+
+    this.socket.onerror = error => {
+      const {
+        lastError
+      } = this;
+      this.lastError = error;
+      if (lastError) return;
+      console.log('stream error', error, new Date().toDateString());
+    };
+
+    this.socket.onheartbeat = () => {
+      this.lastError = null;
+
+      this._heartbeat_received();
+    };
+
+    if (this.connectionTimer) clearTimeout(this.connectionTimer);
+    this.connectionTimer = setTimeout(() => {
+      this._lostConnection(new this.ConnectionError("DDP connection timed out"));
+    }, this.CONNECT_TIMEOUT);
+  }
+
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 },"common.js":function module(require,exports,module){
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                //
-// packages/socket-stream-client/common.js                                                                        //
-//                                                                                                                //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                  //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                     //
+// packages/socket-stream-client/common.js                                                                             //
+//                                                                                                                     //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                       //
 let _objectSpread;
 
 module.link("@babel/runtime/helpers/objectSpread2", {
@@ -456,16 +439,2752 @@ class StreamClientCommon {
   }
 
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+},"sockjs-0.3.4.js":function module(require){
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                     //
+// packages/socket-stream-client/sockjs-0.3.4.js                                                                       //
+//                                                                                                                     //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                       //
+// XXX METEOR changes in <METEOR>
+
+/* SockJS client, version 0.3.4, http://sockjs.org, MIT License
+
+Copyright (c) 2011-2012 VMware, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+// <METEOR> Commented out JSO implementation (use json package instead).
+// JSON2 by Douglas Crockford (minified).
+// var JSON;JSON||(JSON={}),function(){function str(a,b){var c,d,e,f,g=gap,h,i=b[a];i&&typeof i=="object"&&typeof i.toJSON=="function"&&(i=i.toJSON(a)),typeof rep=="function"&&(i=rep.call(b,a,i));switch(typeof i){case"string":return quote(i);case"number":return isFinite(i)?String(i):"null";case"boolean":case"null":return String(i);case"object":if(!i)return"null";gap+=indent,h=[];if(Object.prototype.toString.apply(i)==="[object Array]"){f=i.length;for(c=0;c<f;c+=1)h[c]=str(c,i)||"null";e=h.length===0?"[]":gap?"[\n"+gap+h.join(",\n"+gap)+"\n"+g+"]":"["+h.join(",")+"]",gap=g;return e}if(rep&&typeof rep=="object"){f=rep.length;for(c=0;c<f;c+=1)typeof rep[c]=="string"&&(d=rep[c],e=str(d,i),e&&h.push(quote(d)+(gap?": ":":")+e))}else for(d in i)Object.prototype.hasOwnProperty.call(i,d)&&(e=str(d,i),e&&h.push(quote(d)+(gap?": ":":")+e));e=h.length===0?"{}":gap?"{\n"+gap+h.join(",\n"+gap)+"\n"+g+"}":"{"+h.join(",")+"}",gap=g;return e}}function quote(a){escapable.lastIndex=0;return escapable.test(a)?'"'+a.replace(escapable,function(a){var b=meta[a];return typeof b=="string"?b:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+a+'"'}function f(a){return a<10?"0"+a:a}"use strict",typeof Date.prototype.toJSON!="function"&&(Date.prototype.toJSON=function(a){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null},String.prototype.toJSON=Number.prototype.toJSON=Boolean.prototype.toJSON=function(a){return this.valueOf()});var cx=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,escapable=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,gap,indent,meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"},rep;typeof JSON.stringify!="function"&&(JSON.stringify=function(a,b,c){var d;gap="",indent="";if(typeof c=="number")for(d=0;d<c;d+=1)indent+=" ";else typeof c=="string"&&(indent=c);rep=b;if(!b||typeof b=="function"||typeof b=="object"&&typeof b.length=="number")return str("",{"":a});throw new Error("JSON.stringify")}),typeof JSON.parse!="function"&&(JSON.parse=function(text,reviver){function walk(a,b){var c,d,e=a[b];if(e&&typeof e=="object")for(c in e)Object.prototype.hasOwnProperty.call(e,c)&&(d=walk(e,c),d!==undefined?e[c]=d:delete e[c]);return reviver.call(a,b,e)}var j;text=String(text),cx.lastIndex=0,cx.test(text)&&(text=text.replace(cx,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)}));if(/^[\],:{}\s]*$/.test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,"@").replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,"]").replace(/(?:^|:|,)(?:\s*\[)+/g,""))){j=eval("("+text+")");return typeof reviver=="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")})}()
+// </METEOR>
+//     [*] Including lib/index.js
+// Public object
+SockJS = function () {
+  var _document = document;
+  var _window = window;
+  var utils = {}; //         [*] Including lib/reventtarget.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+  /* Simplified implementation of DOM2 EventTarget.
+   *   http://www.w3.org/TR/DOM-Level-2-Events/events.html#Events-EventTarget
+   */
+
+  var REventTarget = function () {};
+
+  REventTarget.prototype.addEventListener = function (eventType, listener) {
+    if (!this._listeners) {
+      this._listeners = {};
+    }
+
+    if (!(eventType in this._listeners)) {
+      this._listeners[eventType] = [];
+    }
+
+    var arr = this._listeners[eventType];
+
+    if (utils.arrIndexOf(arr, listener) === -1) {
+      arr.push(listener);
+    }
+
+    return;
+  };
+
+  REventTarget.prototype.removeEventListener = function (eventType, listener) {
+    if (!(this._listeners && eventType in this._listeners)) {
+      return;
+    }
+
+    var arr = this._listeners[eventType];
+    var idx = utils.arrIndexOf(arr, listener);
+
+    if (idx !== -1) {
+      if (arr.length > 1) {
+        this._listeners[eventType] = arr.slice(0, idx).concat(arr.slice(idx + 1));
+      } else {
+        delete this._listeners[eventType];
+      }
+
+      return;
+    }
+
+    return;
+  };
+
+  REventTarget.prototype.dispatchEvent = function (event) {
+    var t = event.type;
+    var args = Array.prototype.slice.call(arguments, 0);
+
+    if (this['on' + t]) {
+      this['on' + t].apply(this, args);
+    }
+
+    if (this._listeners && t in this._listeners) {
+      for (var i = 0; i < this._listeners[t].length; i++) {
+        this._listeners[t][i].apply(this, args);
+      }
+    }
+  }; //         [*] End of lib/reventtarget.js
+  //         [*] Including lib/simpleevent.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var SimpleEvent = function (type, obj) {
+    this.type = type;
+
+    if (typeof obj !== 'undefined') {
+      for (var k in obj) {
+        if (!obj.hasOwnProperty(k)) continue;
+        this[k] = obj[k];
+      }
+    }
+  };
+
+  SimpleEvent.prototype.toString = function () {
+    var r = [];
+
+    for (var k in this) {
+      if (!this.hasOwnProperty(k)) continue;
+      var v = this[k];
+      if (typeof v === 'function') v = '[function]';
+      r.push(k + '=' + v);
+    }
+
+    return 'SimpleEvent(' + r.join(', ') + ')';
+  }; //         [*] End of lib/simpleevent.js
+  //         [*] Including lib/eventemitter.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var EventEmitter = function (events) {
+    var that = this;
+    that._events = events || [];
+    that._listeners = {};
+  };
+
+  EventEmitter.prototype.emit = function (type) {
+    var that = this;
+
+    that._verifyType(type);
+
+    if (that._nuked) return;
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    if (that['on' + type]) {
+      that['on' + type].apply(that, args);
+    }
+
+    if (type in that._listeners) {
+      for (var i = 0; i < that._listeners[type].length; i++) {
+        that._listeners[type][i].apply(that, args);
+      }
+    }
+  };
+
+  EventEmitter.prototype.on = function (type, callback) {
+    var that = this;
+
+    that._verifyType(type);
+
+    if (that._nuked) return;
+
+    if (!(type in that._listeners)) {
+      that._listeners[type] = [];
+    }
+
+    that._listeners[type].push(callback);
+  };
+
+  EventEmitter.prototype._verifyType = function (type) {
+    var that = this;
+
+    if (utils.arrIndexOf(that._events, type) === -1) {
+      utils.log('Event ' + JSON.stringify(type) + ' not listed ' + JSON.stringify(that._events) + ' in ' + that);
+    }
+  };
+
+  EventEmitter.prototype.nuke = function () {
+    var that = this;
+    that._nuked = true;
+
+    for (var i = 0; i < that._events.length; i++) {
+      delete that[that._events[i]];
+    }
+
+    that._listeners = {};
+  }; //         [*] End of lib/eventemitter.js
+  //         [*] Including lib/utils.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var random_string_chars = 'abcdefghijklmnopqrstuvwxyz0123456789_';
+
+  utils.random_string = function (length, max) {
+    max = max || random_string_chars.length;
+    var i,
+        ret = [];
+
+    for (i = 0; i < length; i++) {
+      ret.push(random_string_chars.substr(Math.floor(Math.random() * max), 1));
+    }
+
+    return ret.join('');
+  };
+
+  utils.random_number = function (max) {
+    return Math.floor(Math.random() * max);
+  };
+
+  utils.random_number_string = function (max) {
+    var t = ('' + (max - 1)).length;
+    var p = Array(t + 1).join('0');
+    return (p + utils.random_number(max)).slice(-t);
+  }; // Assuming that url looks like: http://asdasd:111/asd
+
+
+  utils.getOrigin = function (url) {
+    url += '/';
+    var parts = url.split('/').slice(0, 3);
+    return parts.join('/');
+  };
+
+  utils.isSameOriginUrl = function (url_a, url_b) {
+    // location.origin would do, but it's not always available.
+    if (!url_b) url_b = _window.location.href;
+    return url_a.split('/').slice(0, 3).join('/') === url_b.split('/').slice(0, 3).join('/');
+  }; // <METEOR>
+  // https://github.com/sockjs/sockjs-client/issues/79
+
+
+  utils.isSameOriginScheme = function (url_a, url_b) {
+    if (!url_b) url_b = _window.location.href;
+    return url_a.split(':')[0] === url_b.split(':')[0];
+  }; // </METEOR>
+
+
+  utils.getParentDomain = function (url) {
+    // ipv4 ip address
+    if (/^[0-9.]*$/.test(url)) return url; // ipv6 ip address
+
+    if (/^\[/.test(url)) return url; // no dots
+
+    if (!/[.]/.test(url)) return url;
+    var parts = url.split('.').slice(1);
+    return parts.join('.');
+  };
+
+  utils.objectExtend = function (dst, src) {
+    for (var k in src) {
+      if (src.hasOwnProperty(k)) {
+        dst[k] = src[k];
+      }
+    }
+
+    return dst;
+  };
+
+  var WPrefix = '_jp';
+
+  utils.polluteGlobalNamespace = function () {
+    if (!(WPrefix in _window)) {
+      _window[WPrefix] = {};
+    }
+  };
+
+  utils.closeFrame = function (code, reason) {
+    return 'c' + JSON.stringify([code, reason]);
+  };
+
+  utils.userSetCode = function (code) {
+    return code === 1000 || code >= 3000 && code <= 4999;
+  }; // See: http://www.erg.abdn.ac.uk/~gerrit/dccp/notes/ccid2/rto_estimator/
+  // and RFC 2988.
+
+
+  utils.countRTO = function (rtt) {
+    var rto;
+
+    if (rtt > 100) {
+      rto = 3 * rtt; // rto > 300msec
+    } else {
+      rto = rtt + 200; // 200msec < rto <= 300msec
+    }
+
+    return rto;
+  };
+
+  utils.log = function () {
+    if (_window.console && console.log && console.log.apply) {
+      console.log.apply(console, arguments);
+    }
+  };
+
+  utils.bind = function (fun, that) {
+    if (fun.bind) {
+      return fun.bind(that);
+    } else {
+      return function () {
+        return fun.apply(that, arguments);
+      };
+    }
+  };
+
+  utils.flatUrl = function (url) {
+    return url.indexOf('?') === -1 && url.indexOf('#') === -1;
+  }; // `relativeTo` is an optional absolute URL. If provided, `url` will be
+  // interpreted relative to `relativeTo`. Defaults to `document.location`.
+  // <METEOR>
+
+
+  utils.amendUrl = function (url, relativeTo) {
+    var baseUrl;
+
+    if (relativeTo === undefined) {
+      baseUrl = _document.location;
+    } else {
+      var protocolMatch = /^([a-z0-9.+-]+:)/i.exec(relativeTo);
+
+      if (protocolMatch) {
+        var protocol = protocolMatch[0].toLowerCase();
+        var rest = relativeTo.substring(protocol.length);
+        var hostMatch = /[a-z0-9\.-]+(:[0-9]+)?/.exec(rest);
+        if (hostMatch) var host = hostMatch[0];
+      }
+
+      if (!protocol || !host) throw new Error("relativeTo must be an absolute url");
+      baseUrl = {
+        protocol: protocol,
+        host: host
+      };
+    }
+
+    if (!url) {
+      throw new Error('Wrong url for SockJS');
+    }
+
+    if (!utils.flatUrl(url)) {
+      throw new Error('Only basic urls are supported in SockJS');
+    } //  '//abc' --> 'http://abc'
+
+
+    if (url.indexOf('//') === 0) {
+      url = baseUrl.protocol + url;
+    } // '/abc' --> 'http://localhost:1234/abc'
+
+
+    if (url.indexOf('/') === 0) {
+      url = baseUrl.protocol + '//' + baseUrl.host + url;
+    } // </METEOR>
+    // strip trailing slashes
+
+
+    url = url.replace(/[/]+$/, ''); // We have a full url here, with proto and host. For some browsers
+    // http://localhost:80/ is not in the same origin as http://localhost/
+    // Remove explicit :80 or :443 in such cases. See #74
+
+    var parts = url.split("/");
+
+    if (parts[0] === "http:" && /:80$/.test(parts[2]) || parts[0] === "https:" && /:443$/.test(parts[2])) {
+      parts[2] = parts[2].replace(/:(80|443)$/, "");
+    }
+
+    url = parts.join("/");
+    return url;
+  }; // IE doesn't support [].indexOf.
+
+
+  utils.arrIndexOf = function (arr, obj) {
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] === obj) {
+        return i;
+      }
+    }
+
+    return -1;
+  };
+
+  utils.arrSkip = function (arr, obj) {
+    var idx = utils.arrIndexOf(arr, obj);
+
+    if (idx === -1) {
+      return arr.slice();
+    } else {
+      var dst = arr.slice(0, idx);
+      return dst.concat(arr.slice(idx + 1));
+    }
+  }; // Via: https://gist.github.com/1133122/2121c601c5549155483f50be3da5305e83b8c5df
+
+
+  utils.isArray = Array.isArray || function (value) {
+    return {}.toString.call(value).indexOf('Array') >= 0;
+  };
+
+  utils.delay = function (t, fun) {
+    if (typeof t === 'function') {
+      fun = t;
+      t = 0;
+    }
+
+    return setTimeout(fun, t);
+  }; // Chars worth escaping, as defined by Douglas Crockford:
+  //   https://github.com/douglascrockford/JSON-js/blob/47a9882cddeb1e8529e07af9736218075372b8ac/json2.js#L196
+
+
+  var json_escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+      json_lookup = {
+    "\0": "\\u0000",
+    "\x01": "\\u0001",
+    "\x02": "\\u0002",
+    "\x03": "\\u0003",
+    "\x04": "\\u0004",
+    "\x05": "\\u0005",
+    "\x06": "\\u0006",
+    "\x07": "\\u0007",
+    "\b": "\\b",
+    "\t": "\\t",
+    "\n": "\\n",
+    "\x0B": "\\u000b",
+    "\f": "\\f",
+    "\r": "\\r",
+    "\x0E": "\\u000e",
+    "\x0F": "\\u000f",
+    "\x10": "\\u0010",
+    "\x11": "\\u0011",
+    "\x12": "\\u0012",
+    "\x13": "\\u0013",
+    "\x14": "\\u0014",
+    "\x15": "\\u0015",
+    "\x16": "\\u0016",
+    "\x17": "\\u0017",
+    "\x18": "\\u0018",
+    "\x19": "\\u0019",
+    "\x1A": "\\u001a",
+    "\x1B": "\\u001b",
+    "\x1C": "\\u001c",
+    "\x1D": "\\u001d",
+    "\x1E": "\\u001e",
+    "\x1F": "\\u001f",
+    "\"": "\\\"",
+    "\\": "\\\\",
+    "\x7F": "\\u007f",
+    "\x80": "\\u0080",
+    "\x81": "\\u0081",
+    "\x82": "\\u0082",
+    "\x83": "\\u0083",
+    "\x84": "\\u0084",
+    "\x85": "\\u0085",
+    "\x86": "\\u0086",
+    "\x87": "\\u0087",
+    "\x88": "\\u0088",
+    "\x89": "\\u0089",
+    "\x8A": "\\u008a",
+    "\x8B": "\\u008b",
+    "\x8C": "\\u008c",
+    "\x8D": "\\u008d",
+    "\x8E": "\\u008e",
+    "\x8F": "\\u008f",
+    "\x90": "\\u0090",
+    "\x91": "\\u0091",
+    "\x92": "\\u0092",
+    "\x93": "\\u0093",
+    "\x94": "\\u0094",
+    "\x95": "\\u0095",
+    "\x96": "\\u0096",
+    "\x97": "\\u0097",
+    "\x98": "\\u0098",
+    "\x99": "\\u0099",
+    "\x9A": "\\u009a",
+    "\x9B": "\\u009b",
+    "\x9C": "\\u009c",
+    "\x9D": "\\u009d",
+    "\x9E": "\\u009e",
+    "\x9F": "\\u009f",
+    "\xAD": "\\u00ad",
+    "\u0600": "\\u0600",
+    "\u0601": "\\u0601",
+    "\u0602": "\\u0602",
+    "\u0603": "\\u0603",
+    "\u0604": "\\u0604",
+    "\u070F": "\\u070f",
+    "\u17B4": "\\u17b4",
+    "\u17B5": "\\u17b5",
+    "\u200C": "\\u200c",
+    "\u200D": "\\u200d",
+    "\u200E": "\\u200e",
+    "\u200F": "\\u200f",
+    "\u2028": "\\u2028",
+    "\u2029": "\\u2029",
+    "\u202A": "\\u202a",
+    "\u202B": "\\u202b",
+    "\u202C": "\\u202c",
+    "\u202D": "\\u202d",
+    "\u202E": "\\u202e",
+    "\u202F": "\\u202f",
+    "\u2060": "\\u2060",
+    "\u2061": "\\u2061",
+    "\u2062": "\\u2062",
+    "\u2063": "\\u2063",
+    "\u2064": "\\u2064",
+    "\u2065": "\\u2065",
+    "\u2066": "\\u2066",
+    "\u2067": "\\u2067",
+    "\u2068": "\\u2068",
+    "\u2069": "\\u2069",
+    "\u206A": "\\u206a",
+    "\u206B": "\\u206b",
+    "\u206C": "\\u206c",
+    "\u206D": "\\u206d",
+    "\u206E": "\\u206e",
+    "\u206F": "\\u206f",
+    "\uFEFF": "\\ufeff",
+    "\uFFF0": "\\ufff0",
+    "\uFFF1": "\\ufff1",
+    "\uFFF2": "\\ufff2",
+    "\uFFF3": "\\ufff3",
+    "\uFFF4": "\\ufff4",
+    "\uFFF5": "\\ufff5",
+    "\uFFF6": "\\ufff6",
+    "\uFFF7": "\\ufff7",
+    "\uFFF8": "\\ufff8",
+    "\uFFF9": "\\ufff9",
+    "\uFFFA": "\\ufffa",
+    "\uFFFB": "\\ufffb",
+    "\uFFFC": "\\ufffc",
+    "\uFFFD": "\\ufffd",
+    "\uFFFE": "\\ufffe",
+    "\uFFFF": "\\uffff"
+  }; // Some extra characters that Chrome gets wrong, and substitutes with
+  // something else on the wire.
+
+  var extra_escapable = /[\x00-\x1f\ud800-\udfff\ufffe\uffff\u0300-\u0333\u033d-\u0346\u034a-\u034c\u0350-\u0352\u0357-\u0358\u035c-\u0362\u0374\u037e\u0387\u0591-\u05af\u05c4\u0610-\u0617\u0653-\u0654\u0657-\u065b\u065d-\u065e\u06df-\u06e2\u06eb-\u06ec\u0730\u0732-\u0733\u0735-\u0736\u073a\u073d\u073f-\u0741\u0743\u0745\u0747\u07eb-\u07f1\u0951\u0958-\u095f\u09dc-\u09dd\u09df\u0a33\u0a36\u0a59-\u0a5b\u0a5e\u0b5c-\u0b5d\u0e38-\u0e39\u0f43\u0f4d\u0f52\u0f57\u0f5c\u0f69\u0f72-\u0f76\u0f78\u0f80-\u0f83\u0f93\u0f9d\u0fa2\u0fa7\u0fac\u0fb9\u1939-\u193a\u1a17\u1b6b\u1cda-\u1cdb\u1dc0-\u1dcf\u1dfc\u1dfe\u1f71\u1f73\u1f75\u1f77\u1f79\u1f7b\u1f7d\u1fbb\u1fbe\u1fc9\u1fcb\u1fd3\u1fdb\u1fe3\u1feb\u1fee-\u1fef\u1ff9\u1ffb\u1ffd\u2000-\u2001\u20d0-\u20d1\u20d4-\u20d7\u20e7-\u20e9\u2126\u212a-\u212b\u2329-\u232a\u2adc\u302b-\u302c\uaab2-\uaab3\uf900-\ufa0d\ufa10\ufa12\ufa15-\ufa1e\ufa20\ufa22\ufa25-\ufa26\ufa2a-\ufa2d\ufa30-\ufa6d\ufa70-\ufad9\ufb1d\ufb1f\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40-\ufb41\ufb43-\ufb44\ufb46-\ufb4e\ufff0-\uffff]/g,
+      extra_lookup; // JSON Quote string. Use native implementation when possible.
+
+  var JSONQuote = JSON && JSON.stringify || function (string) {
+    json_escapable.lastIndex = 0;
+
+    if (json_escapable.test(string)) {
+      string = string.replace(json_escapable, function (a) {
+        return json_lookup[a];
+      });
+    }
+
+    return '"' + string + '"';
+  }; // This may be quite slow, so let's delay until user actually uses bad
+  // characters.
+
+
+  var unroll_lookup = function (escapable) {
+    var i;
+    var unrolled = {};
+    var c = [];
+
+    for (i = 0; i < 65536; i++) {
+      c.push(String.fromCharCode(i));
+    }
+
+    escapable.lastIndex = 0;
+    c.join('').replace(escapable, function (a) {
+      unrolled[a] = "\\u" + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+      return '';
+    });
+    escapable.lastIndex = 0;
+    return unrolled;
+  }; // Quote string, also taking care of unicode characters that browsers
+  // often break. Especially, take care of unicode surrogates:
+  //    http://en.wikipedia.org/wiki/Mapping_of_Unicode_characters#Surrogates
+
+
+  utils.quote = function (string) {
+    var quoted = JSONQuote(string); // In most cases this should be very fast and good enough.
+
+    extra_escapable.lastIndex = 0;
+
+    if (!extra_escapable.test(quoted)) {
+      return quoted;
+    }
+
+    if (!extra_lookup) extra_lookup = unroll_lookup(extra_escapable);
+    return quoted.replace(extra_escapable, function (a) {
+      return extra_lookup[a];
+    });
+  };
+
+  var _all_protocols = ['websocket', 'xdr-streaming', 'xhr-streaming', 'iframe-eventsource', 'iframe-htmlfile', 'xdr-polling', 'xhr-polling', 'iframe-xhr-polling', 'jsonp-polling'];
+
+  utils.probeProtocols = function () {
+    var probed = {};
+
+    for (var i = 0; i < _all_protocols.length; i++) {
+      var protocol = _all_protocols[i]; // User can have a typo in protocol name.
+
+      probed[protocol] = SockJS[protocol] && SockJS[protocol].enabled();
+    }
+
+    return probed;
+  };
+
+  utils.detectProtocols = function (probed, protocols_whitelist, info) {
+    var pe = {},
+        protocols = [];
+    if (!protocols_whitelist) protocols_whitelist = _all_protocols;
+
+    for (var i = 0; i < protocols_whitelist.length; i++) {
+      var protocol = protocols_whitelist[i];
+      pe[protocol] = probed[protocol];
+    }
+
+    var maybe_push = function (protos) {
+      var proto = protos.shift();
+
+      if (pe[proto]) {
+        protocols.push(proto);
+      } else {
+        if (protos.length > 0) {
+          maybe_push(protos);
+        }
+      }
+    }; // 1. Websocket
+
+
+    if (info.websocket !== false) {
+      maybe_push(['websocket']);
+    } // 2. Streaming
+
+
+    if (pe['xhr-streaming'] && !info.null_origin) {
+      protocols.push('xhr-streaming');
+    } else {
+      if (pe['xdr-streaming'] && !info.cookie_needed && !info.null_origin) {
+        protocols.push('xdr-streaming');
+      } else {
+        maybe_push(['iframe-eventsource', 'iframe-htmlfile']);
+      }
+    } // 3. Polling
+
+
+    if (pe['xhr-polling'] && !info.null_origin) {
+      protocols.push('xhr-polling');
+    } else {
+      if (pe['xdr-polling'] && !info.cookie_needed && !info.null_origin) {
+        protocols.push('xdr-polling');
+      } else {
+        maybe_push(['iframe-xhr-polling', 'jsonp-polling']);
+      }
+    }
+
+    return protocols;
+  }; //         [*] End of lib/utils.js
+  //         [*] Including lib/dom.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+  // May be used by htmlfile jsonp and transports.
+
+
+  var MPrefix = '_sockjs_global';
+
+  utils.createHook = function () {
+    var window_id = 'a' + utils.random_string(8);
+
+    if (!(MPrefix in _window)) {
+      var map = {};
+
+      _window[MPrefix] = function (window_id) {
+        if (!(window_id in map)) {
+          map[window_id] = {
+            id: window_id,
+            del: function () {
+              delete map[window_id];
+            }
+          };
+        }
+
+        return map[window_id];
+      };
+    }
+
+    return _window[MPrefix](window_id);
+  };
+
+  utils.attachMessage = function (listener) {
+    utils.attachEvent('message', listener);
+  };
+
+  utils.attachEvent = function (event, listener) {
+    if (typeof _window.addEventListener !== 'undefined') {
+      _window.addEventListener(event, listener, false);
+    } else {
+      // IE quirks.
+      // According to: http://stevesouders.com/misc/test-postmessage.php
+      // the message gets delivered only to 'document', not 'window'.
+      _document.attachEvent("on" + event, listener); // I get 'window' for ie8.
+
+
+      _window.attachEvent("on" + event, listener);
+    }
+  };
+
+  utils.detachMessage = function (listener) {
+    utils.detachEvent('message', listener);
+  };
+
+  utils.detachEvent = function (event, listener) {
+    if (typeof _window.addEventListener !== 'undefined') {
+      _window.removeEventListener(event, listener, false);
+    } else {
+      _document.detachEvent("on" + event, listener);
+
+      _window.detachEvent("on" + event, listener);
+    }
+  };
+
+  var on_unload = {}; // Things registered after beforeunload are to be called immediately.
+
+  var after_unload = false;
+
+  var trigger_unload_callbacks = function () {
+    for (var ref in on_unload) {
+      on_unload[ref]();
+      delete on_unload[ref];
+    }
+
+    ;
+  };
+
+  var unload_triggered = function () {
+    if (after_unload) return;
+    after_unload = true;
+    trigger_unload_callbacks();
+  }; // 'unload' alone is not reliable in opera within an iframe, but we
+  // can't use `beforeunload` as IE fires it on javascript: links.
+
+
+  utils.attachEvent('unload', unload_triggered);
+
+  utils.unload_add = function (listener) {
+    var ref = utils.random_string(8);
+    on_unload[ref] = listener;
+
+    if (after_unload) {
+      utils.delay(trigger_unload_callbacks);
+    }
+
+    return ref;
+  };
+
+  utils.unload_del = function (ref) {
+    if (ref in on_unload) delete on_unload[ref];
+  };
+
+  utils.createIframe = function (iframe_url, error_callback) {
+    var iframe = _document.createElement('iframe');
+
+    var tref, unload_ref;
+
+    var unattach = function () {
+      clearTimeout(tref); // Explorer had problems with that.
+
+      try {
+        iframe.onload = null;
+      } catch (x) {}
+
+      iframe.onerror = null;
+    };
+
+    var cleanup = function () {
+      if (iframe) {
+        unattach(); // This timeout makes chrome fire onbeforeunload event
+        // within iframe. Without the timeout it goes straight to
+        // onunload.
+
+        setTimeout(function () {
+          if (iframe) {
+            iframe.parentNode.removeChild(iframe);
+          }
+
+          iframe = null;
+        }, 0);
+        utils.unload_del(unload_ref);
+      }
+    };
+
+    var onerror = function (r) {
+      if (iframe) {
+        cleanup();
+        error_callback(r);
+      }
+    };
+
+    var post = function (msg, origin) {
+      try {
+        // When the iframe is not loaded, IE raises an exception
+        // on 'contentWindow'.
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(msg, origin);
+        }
+      } catch (x) {}
+
+      ;
+    };
+
+    iframe.src = iframe_url;
+    iframe.style.display = 'none';
+    iframe.style.position = 'absolute';
+
+    iframe.onerror = function () {
+      onerror('onerror');
+    };
+
+    iframe.onload = function () {
+      // `onload` is triggered before scripts on the iframe are
+      // executed. Give it few seconds to actually load stuff.
+      clearTimeout(tref);
+      tref = setTimeout(function () {
+        onerror('onload timeout');
+      }, 2000);
+    };
+
+    _document.body.appendChild(iframe);
+
+    tref = setTimeout(function () {
+      onerror('timeout');
+    }, 15000);
+    unload_ref = utils.unload_add(cleanup);
+    return {
+      post: post,
+      cleanup: cleanup,
+      loaded: unattach
+    };
+  };
+
+  utils.createHtmlfile = function (iframe_url, error_callback) {
+    var doc = new ActiveXObject('htmlfile');
+    var tref, unload_ref;
+    var iframe;
+
+    var unattach = function () {
+      clearTimeout(tref);
+    };
+
+    var cleanup = function () {
+      if (doc) {
+        unattach();
+        utils.unload_del(unload_ref);
+        iframe.parentNode.removeChild(iframe);
+        iframe = doc = null;
+        CollectGarbage();
+      }
+    };
+
+    var onerror = function (r) {
+      if (doc) {
+        cleanup();
+        error_callback(r);
+      }
+    };
+
+    var post = function (msg, origin) {
+      try {
+        // When the iframe is not loaded, IE raises an exception
+        // on 'contentWindow'.
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(msg, origin);
+        }
+      } catch (x) {}
+
+      ;
+    };
+
+    doc.open();
+    doc.write('<html><s' + 'cript>' + 'document.domain="' + document.domain + '";' + '</s' + 'cript></html>');
+    doc.close();
+    doc.parentWindow[WPrefix] = _window[WPrefix];
+    var c = doc.createElement('div');
+    doc.body.appendChild(c);
+    iframe = doc.createElement('iframe');
+    c.appendChild(iframe);
+    iframe.src = iframe_url;
+    tref = setTimeout(function () {
+      onerror('timeout');
+    }, 15000);
+    unload_ref = utils.unload_add(cleanup);
+    return {
+      post: post,
+      cleanup: cleanup,
+      loaded: unattach
+    };
+  }; //         [*] End of lib/dom.js
+  //         [*] Including lib/dom2.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var AbstractXHRObject = function () {};
+
+  AbstractXHRObject.prototype = new EventEmitter(['chunk', 'finish']);
+
+  AbstractXHRObject.prototype._start = function (method, url, payload, opts) {
+    var that = this;
+
+    try {
+      that.xhr = new XMLHttpRequest();
+    } catch (x) {}
+
+    ;
+
+    if (!that.xhr) {
+      try {
+        that.xhr = new _window.ActiveXObject('Microsoft.XMLHTTP');
+      } catch (x) {}
+
+      ;
+    }
+
+    if (_window.ActiveXObject || _window.XDomainRequest) {
+      // IE8 caches even POSTs
+      url += (url.indexOf('?') === -1 ? '?' : '&') + 't=' + +new Date();
+    } // Explorer tends to keep connection open, even after the
+    // tab gets closed: http://bugs.jquery.com/ticket/5280
+
+
+    that.unload_ref = utils.unload_add(function () {
+      that._cleanup(true);
+    });
+
+    try {
+      that.xhr.open(method, url, true);
+    } catch (e) {
+      // IE raises an exception on wrong port.
+      that.emit('finish', 0, '');
+
+      that._cleanup();
+
+      return;
+    }
+
+    ;
+
+    if (!opts || !opts.no_credentials) {
+      // Mozilla docs says https://developer.mozilla.org/en/XMLHttpRequest :
+      // "This never affects same-site requests."
+      that.xhr.withCredentials = 'true';
+    }
+
+    if (opts && opts.headers) {
+      for (var key in opts.headers) {
+        that.xhr.setRequestHeader(key, opts.headers[key]);
+      }
+    }
+
+    that.xhr.onreadystatechange = function () {
+      if (that.xhr) {
+        var x = that.xhr;
+
+        switch (x.readyState) {
+          case 3:
+            // IE doesn't like peeking into responseText or status
+            // on Microsoft.XMLHTTP and readystate=3
+            try {
+              var status = x.status;
+              var text = x.responseText;
+            } catch (x) {}
+
+            ; // IE returns 1223 for 204: http://bugs.jquery.com/ticket/1450
+
+            if (status === 1223) status = 204; // IE does return readystate == 3 for 404 answers.
+
+            if (text && text.length > 0) {
+              that.emit('chunk', status, text);
+            }
+
+            break;
+
+          case 4:
+            var status = x.status; // IE returns 1223 for 204: http://bugs.jquery.com/ticket/1450
+
+            if (status === 1223) status = 204;
+            that.emit('finish', status, x.responseText);
+
+            that._cleanup(false);
+
+            break;
+        }
+      }
+    };
+
+    that.xhr.send(payload);
+  };
+
+  AbstractXHRObject.prototype._cleanup = function (abort) {
+    var that = this;
+    if (!that.xhr) return;
+    utils.unload_del(that.unload_ref); // IE needs this field to be a function
+
+    that.xhr.onreadystatechange = function () {};
+
+    if (abort) {
+      try {
+        that.xhr.abort();
+      } catch (x) {}
+
+      ;
+    }
+
+    that.unload_ref = that.xhr = null;
+  };
+
+  AbstractXHRObject.prototype.close = function () {
+    var that = this;
+    that.nuke();
+
+    that._cleanup(true);
+  };
+
+  var XHRCorsObject = utils.XHRCorsObject = function () {
+    var that = this,
+        args = arguments;
+    utils.delay(function () {
+      that._start.apply(that, args);
+    });
+  };
+
+  XHRCorsObject.prototype = new AbstractXHRObject();
+
+  var XHRLocalObject = utils.XHRLocalObject = function (method, url, payload) {
+    var that = this;
+    utils.delay(function () {
+      that._start(method, url, payload, {
+        no_credentials: true
+      });
+    });
+  };
+
+  XHRLocalObject.prototype = new AbstractXHRObject(); // References:
+  //   http://ajaxian.com/archives/100-line-ajax-wrapper
+  //   http://msdn.microsoft.com/en-us/library/cc288060(v=VS.85).aspx
+
+  var XDRObject = utils.XDRObject = function (method, url, payload) {
+    var that = this;
+    utils.delay(function () {
+      that._start(method, url, payload);
+    });
+  };
+
+  XDRObject.prototype = new EventEmitter(['chunk', 'finish']);
+
+  XDRObject.prototype._start = function (method, url, payload) {
+    var that = this;
+    var xdr = new XDomainRequest(); // IE caches even POSTs
+
+    url += (url.indexOf('?') === -1 ? '?' : '&') + 't=' + +new Date();
+
+    var onerror = xdr.ontimeout = xdr.onerror = function () {
+      that.emit('finish', 0, '');
+
+      that._cleanup(false);
+    };
+
+    xdr.onprogress = function () {
+      that.emit('chunk', 200, xdr.responseText);
+    };
+
+    xdr.onload = function () {
+      that.emit('finish', 200, xdr.responseText);
+
+      that._cleanup(false);
+    };
+
+    that.xdr = xdr;
+    that.unload_ref = utils.unload_add(function () {
+      that._cleanup(true);
+    });
+
+    try {
+      // Fails with AccessDenied if port number is bogus
+      that.xdr.open(method, url);
+      that.xdr.send(payload);
+    } catch (x) {
+      onerror();
+    }
+  };
+
+  XDRObject.prototype._cleanup = function (abort) {
+    var that = this;
+    if (!that.xdr) return;
+    utils.unload_del(that.unload_ref);
+    that.xdr.ontimeout = that.xdr.onerror = that.xdr.onprogress = that.xdr.onload = null;
+
+    if (abort) {
+      try {
+        that.xdr.abort();
+      } catch (x) {}
+
+      ;
+    }
+
+    that.unload_ref = that.xdr = null;
+  };
+
+  XDRObject.prototype.close = function () {
+    var that = this;
+    that.nuke();
+
+    that._cleanup(true);
+  }; // 1. Is natively via XHR
+  // 2. Is natively via XDR
+  // 3. Nope, but postMessage is there so it should work via the Iframe.
+  // 4. Nope, sorry.
+
+
+  utils.isXHRCorsCapable = function () {
+    if (_window.XMLHttpRequest && 'withCredentials' in new XMLHttpRequest()) {
+      return 1;
+    } // XDomainRequest doesn't work if page is served from file://
+
+
+    if (_window.XDomainRequest && _document.domain) {
+      return 2;
+    }
+
+    if (IframeTransport.enabled()) {
+      return 3;
+    }
+
+    return 4;
+  }; //         [*] End of lib/dom2.js
+  //         [*] Including lib/sockjs.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var SockJS = function (url, dep_protocols_whitelist, options) {
+    if (!(this instanceof SockJS)) {
+      // makes `new` optional
+      return new SockJS(url, dep_protocols_whitelist, options);
+    }
+
+    var that = this,
+        protocols_whitelist;
+    that._options = {
+      devel: false,
+      debug: false,
+      protocols_whitelist: [],
+      info: undefined,
+      rtt: undefined
+    };
+
+    if (options) {
+      utils.objectExtend(that._options, options);
+    }
+
+    that._base_url = utils.amendUrl(url);
+    that._server = that._options.server || utils.random_number_string(1000);
+
+    if (that._options.protocols_whitelist && that._options.protocols_whitelist.length) {
+      protocols_whitelist = that._options.protocols_whitelist;
+    } else {
+      // Deprecated API
+      if (typeof dep_protocols_whitelist === 'string' && dep_protocols_whitelist.length > 0) {
+        protocols_whitelist = [dep_protocols_whitelist];
+      } else if (utils.isArray(dep_protocols_whitelist)) {
+        protocols_whitelist = dep_protocols_whitelist;
+      } else {
+        protocols_whitelist = null;
+      }
+
+      if (protocols_whitelist) {
+        that._debug('Deprecated API: Use "protocols_whitelist" option ' + 'instead of supplying protocol list as a second ' + 'parameter to SockJS constructor.');
+      }
+    }
+
+    that._protocols = [];
+    that.protocol = null;
+    that.readyState = SockJS.CONNECTING;
+    that._ir = createInfoReceiver(that._base_url);
+
+    that._ir.onfinish = function (info, rtt) {
+      that._ir = null;
+
+      if (info) {
+        if (that._options.info) {
+          // Override if user supplies the option
+          info = utils.objectExtend(info, that._options.info);
+        }
+
+        if (that._options.rtt) {
+          rtt = that._options.rtt;
+        }
+
+        that._applyInfo(info, rtt, protocols_whitelist);
+
+        that._didClose();
+      } else {
+        that._didClose(1002, 'Can\'t connect to server', true);
+      }
+    };
+  }; // Inheritance
+
+
+  SockJS.prototype = new REventTarget();
+  SockJS.version = "0.3.4";
+  SockJS.CONNECTING = 0;
+  SockJS.OPEN = 1;
+  SockJS.CLOSING = 2;
+  SockJS.CLOSED = 3;
+
+  SockJS.prototype._debug = function () {
+    if (this._options.debug) utils.log.apply(utils, arguments);
+  };
+
+  SockJS.prototype._dispatchOpen = function () {
+    var that = this;
+
+    if (that.readyState === SockJS.CONNECTING) {
+      if (that._transport_tref) {
+        clearTimeout(that._transport_tref);
+        that._transport_tref = null;
+      }
+
+      that.readyState = SockJS.OPEN;
+      that.dispatchEvent(new SimpleEvent("open"));
+    } else {
+      // The server might have been restarted, and lost track of our
+      // connection.
+      that._didClose(1006, "Server lost session");
+    }
+  };
+
+  SockJS.prototype._dispatchMessage = function (data) {
+    var that = this;
+    if (that.readyState !== SockJS.OPEN) return;
+    that.dispatchEvent(new SimpleEvent("message", {
+      data: data
+    }));
+  };
+
+  SockJS.prototype._dispatchHeartbeat = function (data) {
+    var that = this;
+    if (that.readyState !== SockJS.OPEN) return;
+    that.dispatchEvent(new SimpleEvent('heartbeat', {}));
+  };
+
+  SockJS.prototype._didClose = function (code, reason, force) {
+    var that = this;
+    if (that.readyState !== SockJS.CONNECTING && that.readyState !== SockJS.OPEN && that.readyState !== SockJS.CLOSING) throw new Error('INVALID_STATE_ERR');
+
+    if (that._ir) {
+      that._ir.nuke();
+
+      that._ir = null;
+    }
+
+    if (that._transport) {
+      that._transport.doCleanup();
+
+      that._transport = null;
+    }
+
+    var close_event = new SimpleEvent("close", {
+      code: code,
+      reason: reason,
+      wasClean: utils.userSetCode(code)
+    });
+
+    if (!utils.userSetCode(code) && that.readyState === SockJS.CONNECTING && !force) {
+      if (that._try_next_protocol(close_event)) {
+        return;
+      }
+
+      close_event = new SimpleEvent("close", {
+        code: 2000,
+        reason: "All transports failed",
+        wasClean: false,
+        last_event: close_event
+      });
+    }
+
+    that.readyState = SockJS.CLOSED;
+    utils.delay(function () {
+      that.dispatchEvent(close_event);
+    });
+  };
+
+  SockJS.prototype._didMessage = function (data) {
+    var that = this;
+    var type = data.slice(0, 1);
+
+    switch (type) {
+      case 'o':
+        that._dispatchOpen();
+
+        break;
+
+      case 'a':
+        var payload = JSON.parse(data.slice(1) || '[]');
+
+        for (var i = 0; i < payload.length; i++) {
+          that._dispatchMessage(payload[i]);
+        }
+
+        break;
+
+      case 'm':
+        var payload = JSON.parse(data.slice(1) || 'null');
+
+        that._dispatchMessage(payload);
+
+        break;
+
+      case 'c':
+        var payload = JSON.parse(data.slice(1) || '[]');
+
+        that._didClose(payload[0], payload[1]);
+
+        break;
+
+      case 'h':
+        that._dispatchHeartbeat();
+
+        break;
+    }
+  };
+
+  SockJS.prototype._try_next_protocol = function (close_event) {
+    var that = this;
+
+    if (that.protocol) {
+      that._debug('Closed transport:', that.protocol, '' + close_event);
+
+      that.protocol = null;
+    }
+
+    if (that._transport_tref) {
+      clearTimeout(that._transport_tref);
+      that._transport_tref = null;
+    }
+
+    while (1) {
+      var protocol = that.protocol = that._protocols.shift();
+
+      if (!protocol) {
+        return false;
+      } // Some protocols require access to `body`, what if were in
+      // the `head`?
+
+
+      if (SockJS[protocol] && SockJS[protocol].need_body === true && (!_document.body || typeof _document.readyState !== 'undefined' && _document.readyState !== 'complete')) {
+        that._protocols.unshift(protocol);
+
+        that.protocol = 'waiting-for-load';
+        utils.attachEvent('load', function () {
+          that._try_next_protocol();
+        });
+        return true;
+      }
+
+      if (!SockJS[protocol] || !SockJS[protocol].enabled(that._options)) {
+        that._debug('Skipping transport:', protocol);
+      } else {
+        var roundTrips = SockJS[protocol].roundTrips || 1;
+        var to = (that._options.rto || 0) * roundTrips || 5000;
+        that._transport_tref = utils.delay(to, function () {
+          if (that.readyState === SockJS.CONNECTING) {
+            // I can't understand how it is possible to run
+            // this timer, when the state is CLOSED, but
+            // apparently in IE everythin is possible.
+            that._didClose(2007, "Transport timeouted");
+          }
+        });
+        var connid = utils.random_string(8);
+        var trans_url = that._base_url + '/' + that._server + '/' + connid;
+
+        that._debug('Opening transport:', protocol, ' url:' + trans_url, ' RTO:' + that._options.rto);
+
+        that._transport = new SockJS[protocol](that, trans_url, that._base_url);
+        return true;
+      }
+    }
+  };
+
+  SockJS.prototype.close = function (code, reason) {
+    var that = this;
+    if (code && !utils.userSetCode(code)) throw new Error("INVALID_ACCESS_ERR");
+
+    if (that.readyState !== SockJS.CONNECTING && that.readyState !== SockJS.OPEN) {
+      return false;
+    }
+
+    that.readyState = SockJS.CLOSING;
+
+    that._didClose(code || 1000, reason || "Normal closure");
+
+    return true;
+  };
+
+  SockJS.prototype.send = function (data) {
+    var that = this;
+    if (that.readyState === SockJS.CONNECTING) throw new Error('INVALID_STATE_ERR');
+
+    if (that.readyState === SockJS.OPEN) {
+      that._transport.doSend(utils.quote('' + data));
+    }
+
+    return true;
+  };
+
+  SockJS.prototype._applyInfo = function (info, rtt, protocols_whitelist) {
+    var that = this;
+    that._options.info = info;
+    that._options.rtt = rtt;
+    that._options.rto = utils.countRTO(rtt);
+    that._options.info.null_origin = !_document.domain; // Servers can override base_url, eg to provide a randomized domain name and
+    // avoid browser per-domain connection limits.
+
+    if (info.base_url) // <METEOR>
+      that._base_url = utils.amendUrl(info.base_url, that._base_url); // </METEOR>
+
+    var probed = utils.probeProtocols();
+    that._protocols = utils.detectProtocols(probed, protocols_whitelist, info); // <METEOR>
+    // https://github.com/sockjs/sockjs-client/issues/79
+    // Hack to avoid XDR when using different protocols
+    // We're on IE trying to do cross-protocol. jsonp only.
+
+    if (!utils.isSameOriginScheme(that._base_url) && 2 === utils.isXHRCorsCapable()) {
+      that._protocols = ['jsonp-polling'];
+    } // </METEOR>
+
+  }; //         [*] End of lib/sockjs.js
+  //         [*] Including lib/trans-websocket.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var WebSocketTransport = SockJS.websocket = function (ri, trans_url) {
+    var that = this;
+    var url = trans_url + '/websocket';
+
+    if (url.slice(0, 5) === 'https') {
+      url = 'wss' + url.slice(5);
+    } else {
+      url = 'ws' + url.slice(4);
+    }
+
+    that.ri = ri;
+    that.url = url;
+    var Constructor = _window.WebSocket || _window.MozWebSocket;
+    that.ws = new Constructor(that.url);
+
+    that.ws.onmessage = function (e) {
+      that.ri._didMessage(e.data);
+    }; // Firefox has an interesting bug. If a websocket connection is
+    // created after onunload, it stays alive even when user
+    // navigates away from the page. In such situation let's lie -
+    // let's not open the ws connection at all. See:
+    // https://github.com/sockjs/sockjs-client/issues/28
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=696085
+
+
+    that.unload_ref = utils.unload_add(function () {
+      that.ws.close();
+    });
+
+    that.ws.onclose = function () {
+      that.ri._didMessage(utils.closeFrame(1006, "WebSocket connection broken"));
+    };
+  };
+
+  WebSocketTransport.prototype.doSend = function (data) {
+    this.ws.send('[' + data + ']');
+  };
+
+  WebSocketTransport.prototype.doCleanup = function () {
+    var that = this;
+    var ws = that.ws;
+
+    if (ws) {
+      ws.onmessage = ws.onclose = null;
+      ws.close();
+      utils.unload_del(that.unload_ref);
+      that.unload_ref = that.ri = that.ws = null;
+    }
+  };
+
+  WebSocketTransport.enabled = function () {
+    return !!(_window.WebSocket || _window.MozWebSocket);
+  }; // In theory, ws should require 1 round trip. But in chrome, this is
+  // not very stable over SSL. Most likely a ws connection requires a
+  // separate SSL connection, in which case 2 round trips are an
+  // absolute minumum.
+
+
+  WebSocketTransport.roundTrips = 2; //         [*] End of lib/trans-websocket.js
+  //         [*] Including lib/trans-sender.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+  var BufferedSender = function () {};
+
+  BufferedSender.prototype.send_constructor = function (sender) {
+    var that = this;
+    that.send_buffer = [];
+    that.sender = sender;
+  };
+
+  BufferedSender.prototype.doSend = function (message) {
+    var that = this;
+    that.send_buffer.push(message);
+
+    if (!that.send_stop) {
+      that.send_schedule();
+    }
+  }; // For polling transports in a situation when in the message callback,
+  // new message is being send. If the sending connection was started
+  // before receiving one, it is possible to saturate the network and
+  // timeout due to the lack of receiving socket. To avoid that we delay
+  // sending messages by some small time, in order to let receiving
+  // connection be started beforehand. This is only a halfmeasure and
+  // does not fix the big problem, but it does make the tests go more
+  // stable on slow networks.
+
+
+  BufferedSender.prototype.send_schedule_wait = function () {
+    var that = this;
+    var tref;
+
+    that.send_stop = function () {
+      that.send_stop = null;
+      clearTimeout(tref);
+    };
+
+    tref = utils.delay(25, function () {
+      that.send_stop = null;
+      that.send_schedule();
+    });
+  };
+
+  BufferedSender.prototype.send_schedule = function () {
+    var that = this;
+
+    if (that.send_buffer.length > 0) {
+      var payload = '[' + that.send_buffer.join(',') + ']';
+      that.send_stop = that.sender(that.trans_url, payload, function (success, abort_reason) {
+        that.send_stop = null;
+
+        if (success === false) {
+          that.ri._didClose(1006, 'Sending error ' + abort_reason);
+        } else {
+          that.send_schedule_wait();
+        }
+      });
+      that.send_buffer = [];
+    }
+  };
+
+  BufferedSender.prototype.send_destructor = function () {
+    var that = this;
+
+    if (that._send_stop) {
+      that._send_stop();
+    }
+
+    that._send_stop = null;
+  };
+
+  var jsonPGenericSender = function (url, payload, callback) {
+    var that = this;
+
+    if (!('_send_form' in that)) {
+      var form = that._send_form = _document.createElement('form');
+
+      var area = that._send_area = _document.createElement('textarea');
+
+      area.name = 'd';
+      form.style.display = 'none';
+      form.style.position = 'absolute';
+      form.method = 'POST';
+      form.enctype = 'application/x-www-form-urlencoded';
+      form.acceptCharset = "UTF-8";
+      form.appendChild(area);
+
+      _document.body.appendChild(form);
+    }
+
+    var form = that._send_form;
+    var area = that._send_area;
+    var id = 'a' + utils.random_string(8);
+    form.target = id;
+    form.action = url + '/jsonp_send?i=' + id;
+    var iframe;
+
+    try {
+      // ie6 dynamic iframes with target="" support (thanks Chris Lambacher)
+      iframe = _document.createElement('<iframe name="' + id + '">');
+    } catch (x) {
+      iframe = _document.createElement('iframe');
+      iframe.name = id;
+    }
+
+    iframe.id = id;
+    form.appendChild(iframe);
+    iframe.style.display = 'none';
+
+    try {
+      area.value = payload;
+    } catch (e) {
+      utils.log('Your browser is seriously broken. Go home! ' + e.message);
+    }
+
+    form.submit();
+
+    var completed = function (e) {
+      if (!iframe.onerror) return;
+      iframe.onreadystatechange = iframe.onerror = iframe.onload = null; // Opera mini doesn't like if we GC iframe
+      // immediately, thus this timeout.
+
+      utils.delay(500, function () {
+        iframe.parentNode.removeChild(iframe);
+        iframe = null;
+      });
+      area.value = ''; // It is not possible to detect if the iframe succeeded or
+      // failed to submit our form.
+
+      callback(true);
+    };
+
+    iframe.onerror = iframe.onload = completed;
+
+    iframe.onreadystatechange = function (e) {
+      if (iframe.readyState == 'complete') completed();
+    };
+
+    return completed;
+  };
+
+  var createAjaxSender = function (AjaxObject) {
+    return function (url, payload, callback) {
+      var xo = new AjaxObject('POST', url + '/xhr_send', payload);
+
+      xo.onfinish = function (status, text) {
+        callback(status === 200 || status === 204, 'http status ' + status);
+      };
+
+      return function (abort_reason) {
+        callback(false, abort_reason);
+      };
+    };
+  }; //         [*] End of lib/trans-sender.js
+  //         [*] Including lib/trans-jsonp-receiver.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+  // Parts derived from Socket.io:
+  //    https://github.com/LearnBoost/socket.io/blob/0.6.17/lib/socket.io/transports/jsonp-polling.js
+  // and jQuery-JSONP:
+  //    https://code.google.com/p/jquery-jsonp/source/browse/trunk/core/jquery.jsonp.js
+
+
+  var jsonPGenericReceiver = function (url, callback) {
+    var tref;
+
+    var script = _document.createElement('script');
+
+    var script2; // Opera synchronous load trick.
+
+    var close_script = function (frame) {
+      if (script2) {
+        script2.parentNode.removeChild(script2);
+        script2 = null;
+      }
+
+      if (script) {
+        clearTimeout(tref); // Unfortunately, you can't really abort script loading of
+        // the script.
+
+        script.parentNode.removeChild(script);
+        script.onreadystatechange = script.onerror = script.onload = script.onclick = null;
+        script = null;
+        callback(frame);
+        callback = null;
+      }
+    }; // IE9 fires 'error' event after orsc or before, in random order.
+
+
+    var loaded_okay = false;
+    var error_timer = null;
+    script.id = 'a' + utils.random_string(8);
+    script.src = url;
+    script.type = 'text/javascript';
+    script.charset = 'UTF-8';
+
+    script.onerror = function (e) {
+      if (!error_timer) {
+        // Delay firing close_script.
+        error_timer = setTimeout(function () {
+          if (!loaded_okay) {
+            close_script(utils.closeFrame(1006, "JSONP script loaded abnormally (onerror)"));
+          }
+        }, 1000);
+      }
+    };
+
+    script.onload = function (e) {
+      close_script(utils.closeFrame(1006, "JSONP script loaded abnormally (onload)"));
+    };
+
+    script.onreadystatechange = function (e) {
+      if (/loaded|closed/.test(script.readyState)) {
+        if (script && script.htmlFor && script.onclick) {
+          loaded_okay = true;
+
+          try {
+            // In IE, actually execute the script.
+            script.onclick();
+          } catch (x) {}
+        }
+
+        if (script) {
+          close_script(utils.closeFrame(1006, "JSONP script loaded abnormally (onreadystatechange)"));
+        }
+      }
+    }; // IE: event/htmlFor/onclick trick.
+    // One can't rely on proper order for onreadystatechange. In order to
+    // make sure, set a 'htmlFor' and 'event' properties, so that
+    // script code will be installed as 'onclick' handler for the
+    // script object. Later, onreadystatechange, manually execute this
+    // code. FF and Chrome doesn't work with 'event' and 'htmlFor'
+    // set. For reference see:
+    //   http://jaubourg.net/2010/07/loading-script-as-onclick-handler-of.html
+    // Also, read on that about script ordering:
+    //   http://wiki.whatwg.org/wiki/Dynamic_Script_Execution_Order
+
+
+    if (typeof script.async === 'undefined' && _document.attachEvent) {
+      // According to mozilla docs, in recent browsers script.async defaults
+      // to 'true', so we may use it to detect a good browser:
+      // https://developer.mozilla.org/en/HTML/Element/script
+      if (!/opera/i.test(navigator.userAgent)) {
+        // Naively assume we're in IE
+        try {
+          script.htmlFor = script.id;
+          script.event = "onclick";
+        } catch (x) {}
+
+        script.async = true;
+      } else {
+        // Opera, second sync script hack
+        script2 = _document.createElement('script');
+        script2.text = "try{var a = document.getElementById('" + script.id + "'); if(a)a.onerror();}catch(x){};";
+        script.async = script2.async = false;
+      }
+    }
+
+    if (typeof script.async !== 'undefined') {
+      script.async = true;
+    } // Fallback mostly for Konqueror - stupid timer, 35 seconds shall be plenty.
+
+
+    tref = setTimeout(function () {
+      close_script(utils.closeFrame(1006, "JSONP script loaded abnormally (timeout)"));
+    }, 35000);
+
+    var head = _document.getElementsByTagName('head')[0];
+
+    head.insertBefore(script, head.firstChild);
+
+    if (script2) {
+      head.insertBefore(script2, head.firstChild);
+    }
+
+    return close_script;
+  }; //         [*] End of lib/trans-jsonp-receiver.js
+  //         [*] Including lib/trans-jsonp-polling.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+  // The simplest and most robust transport, using the well-know cross
+  // domain hack - JSONP. This transport is quite inefficient - one
+  // mssage could use up to one http request. But at least it works almost
+  // everywhere.
+  // Known limitations:
+  //   o you will get a spinning cursor
+  //   o for Konqueror a dumb timer is needed to detect errors
+
+
+  var JsonPTransport = SockJS['jsonp-polling'] = function (ri, trans_url) {
+    utils.polluteGlobalNamespace();
+    var that = this;
+    that.ri = ri;
+    that.trans_url = trans_url;
+    that.send_constructor(jsonPGenericSender);
+
+    that._schedule_recv();
+  }; // Inheritnace
+
+
+  JsonPTransport.prototype = new BufferedSender();
+
+  JsonPTransport.prototype._schedule_recv = function () {
+    var that = this;
+
+    var callback = function (data) {
+      that._recv_stop = null;
+
+      if (data) {
+        // no data - heartbeat;
+        if (!that._is_closing) {
+          that.ri._didMessage(data);
+        }
+      } // The message can be a close message, and change is_closing state.
+
+
+      if (!that._is_closing) {
+        that._schedule_recv();
+      }
+    };
+
+    that._recv_stop = jsonPReceiverWrapper(that.trans_url + '/jsonp', jsonPGenericReceiver, callback);
+  };
+
+  JsonPTransport.enabled = function () {
+    return true;
+  };
+
+  JsonPTransport.need_body = true;
+
+  JsonPTransport.prototype.doCleanup = function () {
+    var that = this;
+    that._is_closing = true;
+
+    if (that._recv_stop) {
+      that._recv_stop();
+    }
+
+    that.ri = that._recv_stop = null;
+    that.send_destructor();
+  }; // Abstract away code that handles global namespace pollution.
+
+
+  var jsonPReceiverWrapper = function (url, constructReceiver, user_callback) {
+    var id = 'a' + utils.random_string(6);
+    var url_id = url + '?c=' + escape(WPrefix + '.' + id); // Unfortunately it is not possible to abort loading of the
+    // script. We need to keep track of frake close frames.
+
+    var aborting = 0; // Callback will be called exactly once.
+
+    var callback = function (frame) {
+      switch (aborting) {
+        case 0:
+          // Normal behaviour - delete hook _and_ emit message.
+          delete _window[WPrefix][id];
+          user_callback(frame);
+          break;
+
+        case 1:
+          // Fake close frame - emit but don't delete hook.
+          user_callback(frame);
+          aborting = 2;
+          break;
+
+        case 2:
+          // Got frame after connection was closed, delete hook, don't emit.
+          delete _window[WPrefix][id];
+          break;
+      }
+    };
+
+    var close_script = constructReceiver(url_id, callback);
+    _window[WPrefix][id] = close_script;
+
+    var stop = function () {
+      if (_window[WPrefix][id]) {
+        aborting = 1;
+
+        _window[WPrefix][id](utils.closeFrame(1000, "JSONP user aborted read"));
+      }
+    };
+
+    return stop;
+  }; //         [*] End of lib/trans-jsonp-polling.js
+  //         [*] Including lib/trans-xhr.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var AjaxBasedTransport = function () {};
+
+  AjaxBasedTransport.prototype = new BufferedSender();
+
+  AjaxBasedTransport.prototype.run = function (ri, trans_url, url_suffix, Receiver, AjaxObject) {
+    var that = this;
+    that.ri = ri;
+    that.trans_url = trans_url;
+    that.send_constructor(createAjaxSender(AjaxObject));
+    that.poll = new Polling(ri, Receiver, trans_url + url_suffix, AjaxObject);
+  };
+
+  AjaxBasedTransport.prototype.doCleanup = function () {
+    var that = this;
+
+    if (that.poll) {
+      that.poll.abort();
+      that.poll = null;
+    }
+  }; // xhr-streaming
+
+
+  var XhrStreamingTransport = SockJS['xhr-streaming'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/xhr_streaming', XhrReceiver, utils.XHRCorsObject);
+  };
+
+  XhrStreamingTransport.prototype = new AjaxBasedTransport();
+
+  XhrStreamingTransport.enabled = function () {
+    // Support for CORS Ajax aka Ajax2? Opera 12 claims CORS but
+    // doesn't do streaming.
+    return _window.XMLHttpRequest && 'withCredentials' in new XMLHttpRequest() && !/opera/i.test(navigator.userAgent);
+  };
+
+  XhrStreamingTransport.roundTrips = 2; // preflight, ajax
+  // Safari gets confused when a streaming ajax request is started
+  // before onload. This causes the load indicator to spin indefinetely.
+
+  XhrStreamingTransport.need_body = true; // According to:
+  //   http://stackoverflow.com/questions/1641507/detect-browser-support-for-cross-domain-xmlhttprequests
+  //   http://hacks.mozilla.org/2009/07/cross-site-xmlhttprequest-with-cors/
+  // xdr-streaming
+
+  var XdrStreamingTransport = SockJS['xdr-streaming'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/xhr_streaming', XhrReceiver, utils.XDRObject);
+  };
+
+  XdrStreamingTransport.prototype = new AjaxBasedTransport();
+
+  XdrStreamingTransport.enabled = function () {
+    return !!_window.XDomainRequest;
+  };
+
+  XdrStreamingTransport.roundTrips = 2; // preflight, ajax
+  // xhr-polling
+
+  var XhrPollingTransport = SockJS['xhr-polling'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/xhr', XhrReceiver, utils.XHRCorsObject);
+  };
+
+  XhrPollingTransport.prototype = new AjaxBasedTransport();
+  XhrPollingTransport.enabled = XhrStreamingTransport.enabled;
+  XhrPollingTransport.roundTrips = 2; // preflight, ajax
+  // xdr-polling
+
+  var XdrPollingTransport = SockJS['xdr-polling'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/xhr', XhrReceiver, utils.XDRObject);
+  };
+
+  XdrPollingTransport.prototype = new AjaxBasedTransport();
+  XdrPollingTransport.enabled = XdrStreamingTransport.enabled;
+  XdrPollingTransport.roundTrips = 2; // preflight, ajax
+  //         [*] End of lib/trans-xhr.js
+  //         [*] Including lib/trans-iframe.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+  // Few cool transports do work only for same-origin. In order to make
+  // them working cross-domain we shall use iframe, served form the
+  // remote domain. New browsers, have capabilities to communicate with
+  // cross domain iframe, using postMessage(). In IE it was implemented
+  // from IE 8+, but of course, IE got some details wrong:
+  //    http://msdn.microsoft.com/en-us/library/cc197015(v=VS.85).aspx
+  //    http://stevesouders.com/misc/test-postmessage.php
+
+  var IframeTransport = function () {};
+
+  IframeTransport.prototype.i_constructor = function (ri, trans_url, base_url) {
+    var that = this;
+    that.ri = ri;
+    that.origin = utils.getOrigin(base_url);
+    that.base_url = base_url;
+    that.trans_url = trans_url;
+    var iframe_url = base_url + '/iframe.html';
+
+    if (that.ri._options.devel) {
+      iframe_url += '?t=' + +new Date();
+    }
+
+    that.window_id = utils.random_string(8);
+    iframe_url += '#' + that.window_id;
+    that.iframeObj = utils.createIframe(iframe_url, function (r) {
+      that.ri._didClose(1006, "Unable to load an iframe (" + r + ")");
+    });
+    that.onmessage_cb = utils.bind(that.onmessage, that);
+    utils.attachMessage(that.onmessage_cb);
+  };
+
+  IframeTransport.prototype.doCleanup = function () {
+    var that = this;
+
+    if (that.iframeObj) {
+      utils.detachMessage(that.onmessage_cb);
+
+      try {
+        // When the iframe is not loaded, IE raises an exception
+        // on 'contentWindow'.
+        if (that.iframeObj.iframe.contentWindow) {
+          that.postMessage('c');
+        }
+      } catch (x) {}
+
+      that.iframeObj.cleanup();
+      that.iframeObj = null;
+      that.onmessage_cb = that.iframeObj = null;
+    }
+  };
+
+  IframeTransport.prototype.onmessage = function (e) {
+    var that = this;
+    if (e.origin !== that.origin) return;
+    var window_id = e.data.slice(0, 8);
+    var type = e.data.slice(8, 9);
+    var data = e.data.slice(9);
+    if (window_id !== that.window_id) return;
+
+    switch (type) {
+      case 's':
+        that.iframeObj.loaded();
+        that.postMessage('s', JSON.stringify([SockJS.version, that.protocol, that.trans_url, that.base_url]));
+        break;
+
+      case 't':
+        that.ri._didMessage(data);
+
+        break;
+    }
+  };
+
+  IframeTransport.prototype.postMessage = function (type, data) {
+    var that = this;
+    that.iframeObj.post(that.window_id + type + (data || ''), that.origin);
+  };
+
+  IframeTransport.prototype.doSend = function (message) {
+    this.postMessage('m', message);
+  };
+
+  IframeTransport.enabled = function () {
+    // postMessage misbehaves in konqueror 4.6.5 - the messages are delivered with
+    // huge delay, or not at all.
+    var konqueror = navigator && navigator.userAgent && navigator.userAgent.indexOf('Konqueror') !== -1;
+    return (typeof _window.postMessage === 'function' || typeof _window.postMessage === 'object') && !konqueror;
+  }; //         [*] End of lib/trans-iframe.js
+  //         [*] Including lib/trans-iframe-within.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var curr_window_id;
+
+  var postMessage = function (type, data) {
+    if (parent !== _window) {
+      parent.postMessage(curr_window_id + type + (data || ''), '*');
+    } else {
+      utils.log("Can't postMessage, no parent window.", type, data);
+    }
+  };
+
+  var FacadeJS = function () {};
+
+  FacadeJS.prototype._didClose = function (code, reason) {
+    postMessage('t', utils.closeFrame(code, reason));
+  };
+
+  FacadeJS.prototype._didMessage = function (frame) {
+    postMessage('t', frame);
+  };
+
+  FacadeJS.prototype._doSend = function (data) {
+    this._transport.doSend(data);
+  };
+
+  FacadeJS.prototype._doCleanup = function () {
+    this._transport.doCleanup();
+  };
+
+  utils.parent_origin = undefined;
+
+  SockJS.bootstrap_iframe = function () {
+    var facade;
+    curr_window_id = _document.location.hash.slice(1);
+
+    var onMessage = function (e) {
+      if (e.source !== parent) return;
+      if (typeof utils.parent_origin === 'undefined') utils.parent_origin = e.origin;
+      if (e.origin !== utils.parent_origin) return;
+      var window_id = e.data.slice(0, 8);
+      var type = e.data.slice(8, 9);
+      var data = e.data.slice(9);
+      if (window_id !== curr_window_id) return;
+
+      switch (type) {
+        case 's':
+          var p = JSON.parse(data);
+          var version = p[0];
+          var protocol = p[1];
+          var trans_url = p[2];
+          var base_url = p[3];
+
+          if (version !== SockJS.version) {
+            utils.log("Incompatibile SockJS! Main site uses:" + " \"" + version + "\", the iframe:" + " \"" + SockJS.version + "\".");
+          }
+
+          if (!utils.flatUrl(trans_url) || !utils.flatUrl(base_url)) {
+            utils.log("Only basic urls are supported in SockJS");
+            return;
+          }
+
+          if (!utils.isSameOriginUrl(trans_url) || !utils.isSameOriginUrl(base_url)) {
+            utils.log("Can't connect to different domain from within an " + "iframe. (" + JSON.stringify([_window.location.href, trans_url, base_url]) + ")");
+            return;
+          }
+
+          facade = new FacadeJS();
+          facade._transport = new FacadeJS[protocol](facade, trans_url, base_url);
+          break;
+
+        case 'm':
+          facade._doSend(data);
+
+          break;
+
+        case 'c':
+          if (facade) facade._doCleanup();
+          facade = null;
+          break;
+      }
+    }; // alert('test ticker');
+    // facade = new FacadeJS();
+    // facade._transport = new FacadeJS['w-iframe-xhr-polling'](facade, 'http://host.com:9999/ticker/12/basd');
+
+
+    utils.attachMessage(onMessage); // Start
+
+    postMessage('s');
+  }; //         [*] End of lib/trans-iframe-within.js
+  //         [*] Including lib/info.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var InfoReceiver = function (base_url, AjaxObject) {
+    var that = this;
+    utils.delay(function () {
+      that.doXhr(base_url, AjaxObject);
+    });
+  };
+
+  InfoReceiver.prototype = new EventEmitter(['finish']);
+
+  InfoReceiver.prototype.doXhr = function (base_url, AjaxObject) {
+    var that = this;
+    var t0 = new Date().getTime(); // <METEOR>
+    // https://github.com/sockjs/sockjs-client/pull/129
+    // var xo = new AjaxObject('GET', base_url + '/info');
+
+    var xo = new AjaxObject( // add cachebusting parameter to url to work around a chrome bug:
+    // https://code.google.com/p/chromium/issues/detail?id=263981
+    // or misbehaving proxies.
+    'GET', base_url + '/info?cb=' + utils.random_string(10)); // </METEOR>
+
+    var tref = utils.delay(8000, function () {
+      xo.ontimeout();
+    });
+
+    xo.onfinish = function (status, text) {
+      clearTimeout(tref);
+      tref = null;
+
+      if (status === 200) {
+        var rtt = new Date().getTime() - t0;
+        var info = JSON.parse(text);
+        if (typeof info !== 'object') info = {};
+        that.emit('finish', info, rtt);
+      } else {
+        that.emit('finish');
+      }
+    };
+
+    xo.ontimeout = function () {
+      xo.close();
+      that.emit('finish');
+    };
+  };
+
+  var InfoReceiverIframe = function (base_url) {
+    var that = this;
+
+    var go = function () {
+      var ifr = new IframeTransport();
+      ifr.protocol = 'w-iframe-info-receiver';
+
+      var fun = function (r) {
+        if (typeof r === 'string' && r.substr(0, 1) === 'm') {
+          var d = JSON.parse(r.substr(1));
+          var info = d[0],
+              rtt = d[1];
+          that.emit('finish', info, rtt);
+        } else {
+          that.emit('finish');
+        }
+
+        ifr.doCleanup();
+        ifr = null;
+      };
+
+      var mock_ri = {
+        _options: {},
+        _didClose: fun,
+        _didMessage: fun
+      };
+      ifr.i_constructor(mock_ri, base_url, base_url);
+    };
+
+    if (!_document.body) {
+      utils.attachEvent('load', go);
+    } else {
+      go();
+    }
+  };
+
+  InfoReceiverIframe.prototype = new EventEmitter(['finish']);
+
+  var InfoReceiverFake = function () {
+    // It may not be possible to do cross domain AJAX to get the info
+    // data, for example for IE7. But we want to run JSONP, so let's
+    // fake the response, with rtt=2s (rto=6s).
+    var that = this;
+    utils.delay(function () {
+      that.emit('finish', {}, 2000);
+    });
+  };
+
+  InfoReceiverFake.prototype = new EventEmitter(['finish']);
+
+  var createInfoReceiver = function (base_url) {
+    if (utils.isSameOriginUrl(base_url)) {
+      // If, for some reason, we have SockJS locally - there's no
+      // need to start up the complex machinery. Just use ajax.
+      return new InfoReceiver(base_url, utils.XHRLocalObject);
+    }
+
+    switch (utils.isXHRCorsCapable()) {
+      case 1:
+        // XHRLocalObject -> no_credentials=true
+        return new InfoReceiver(base_url, utils.XHRLocalObject);
+
+      case 2:
+        // <METEOR>
+        // https://github.com/sockjs/sockjs-client/issues/79
+        // XDR doesn't work across different schemes
+        // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+        if (utils.isSameOriginScheme(base_url)) return new InfoReceiver(base_url, utils.XDRObject);else return new InfoReceiverFake();
+      // </METEOR>
+
+      case 3:
+        // Opera
+        return new InfoReceiverIframe(base_url);
+
+      default:
+        // IE 7
+        return new InfoReceiverFake();
+    }
+
+    ;
+  };
+
+  var WInfoReceiverIframe = FacadeJS['w-iframe-info-receiver'] = function (ri, _trans_url, base_url) {
+    var ir = new InfoReceiver(base_url, utils.XHRLocalObject);
+
+    ir.onfinish = function (info, rtt) {
+      ri._didMessage('m' + JSON.stringify([info, rtt]));
+
+      ri._didClose();
+    };
+  };
+
+  WInfoReceiverIframe.prototype.doCleanup = function () {}; //         [*] End of lib/info.js
+  //         [*] Including lib/trans-iframe-eventsource.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var EventSourceIframeTransport = SockJS['iframe-eventsource'] = function () {
+    var that = this;
+    that.protocol = 'w-iframe-eventsource';
+    that.i_constructor.apply(that, arguments);
+  };
+
+  EventSourceIframeTransport.prototype = new IframeTransport();
+
+  EventSourceIframeTransport.enabled = function () {
+    return 'EventSource' in _window && IframeTransport.enabled();
+  };
+
+  EventSourceIframeTransport.need_body = true;
+  EventSourceIframeTransport.roundTrips = 3; // html, javascript, eventsource
+  // w-iframe-eventsource
+
+  var EventSourceTransport = FacadeJS['w-iframe-eventsource'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/eventsource', EventSourceReceiver, utils.XHRLocalObject);
+  };
+
+  EventSourceTransport.prototype = new AjaxBasedTransport(); //         [*] End of lib/trans-iframe-eventsource.js
+  //         [*] Including lib/trans-iframe-xhr-polling.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+  var XhrPollingIframeTransport = SockJS['iframe-xhr-polling'] = function () {
+    var that = this;
+    that.protocol = 'w-iframe-xhr-polling';
+    that.i_constructor.apply(that, arguments);
+  };
+
+  XhrPollingIframeTransport.prototype = new IframeTransport();
+
+  XhrPollingIframeTransport.enabled = function () {
+    return _window.XMLHttpRequest && IframeTransport.enabled();
+  };
+
+  XhrPollingIframeTransport.need_body = true;
+  XhrPollingIframeTransport.roundTrips = 3; // html, javascript, xhr
+  // w-iframe-xhr-polling
+
+  var XhrPollingITransport = FacadeJS['w-iframe-xhr-polling'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/xhr', XhrReceiver, utils.XHRLocalObject);
+  };
+
+  XhrPollingITransport.prototype = new AjaxBasedTransport(); //         [*] End of lib/trans-iframe-xhr-polling.js
+  //         [*] Including lib/trans-iframe-htmlfile.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+  // This transport generally works in any browser, but will cause a
+  // spinning cursor to appear in any browser other than IE.
+  // We may test this transport in all browsers - why not, but in
+  // production it should be only run in IE.
+
+  var HtmlFileIframeTransport = SockJS['iframe-htmlfile'] = function () {
+    var that = this;
+    that.protocol = 'w-iframe-htmlfile';
+    that.i_constructor.apply(that, arguments);
+  }; // Inheritance.
+
+
+  HtmlFileIframeTransport.prototype = new IframeTransport();
+
+  HtmlFileIframeTransport.enabled = function () {
+    return IframeTransport.enabled();
+  };
+
+  HtmlFileIframeTransport.need_body = true;
+  HtmlFileIframeTransport.roundTrips = 3; // html, javascript, htmlfile
+  // w-iframe-htmlfile
+
+  var HtmlFileTransport = FacadeJS['w-iframe-htmlfile'] = function (ri, trans_url) {
+    this.run(ri, trans_url, '/htmlfile', HtmlfileReceiver, utils.XHRLocalObject);
+  };
+
+  HtmlFileTransport.prototype = new AjaxBasedTransport(); //         [*] End of lib/trans-iframe-htmlfile.js
+  //         [*] Including lib/trans-polling.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+  var Polling = function (ri, Receiver, recv_url, AjaxObject) {
+    var that = this;
+    that.ri = ri;
+    that.Receiver = Receiver;
+    that.recv_url = recv_url;
+    that.AjaxObject = AjaxObject;
+
+    that._scheduleRecv();
+  };
+
+  Polling.prototype._scheduleRecv = function () {
+    var that = this;
+    var poll = that.poll = new that.Receiver(that.recv_url, that.AjaxObject);
+    var msg_counter = 0;
+
+    poll.onmessage = function (e) {
+      msg_counter += 1;
+
+      that.ri._didMessage(e.data);
+    };
+
+    poll.onclose = function (e) {
+      that.poll = poll = poll.onmessage = poll.onclose = null;
+
+      if (!that.poll_is_closing) {
+        if (e.reason === 'permanent') {
+          that.ri._didClose(1006, 'Polling error (' + e.reason + ')');
+        } else {
+          that._scheduleRecv();
+        }
+      }
+    };
+  };
+
+  Polling.prototype.abort = function () {
+    var that = this;
+    that.poll_is_closing = true;
+
+    if (that.poll) {
+      that.poll.abort();
+    }
+  }; //         [*] End of lib/trans-polling.js
+  //         [*] Including lib/trans-receiver-eventsource.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var EventSourceReceiver = function (url) {
+    var that = this;
+    var es = new EventSource(url);
+
+    es.onmessage = function (e) {
+      that.dispatchEvent(new SimpleEvent('message', {
+        'data': unescape(e.data)
+      }));
+    };
+
+    that.es_close = es.onerror = function (e, abort_reason) {
+      // ES on reconnection has readyState = 0 or 1.
+      // on network error it's CLOSED = 2
+      var reason = abort_reason ? 'user' : es.readyState !== 2 ? 'network' : 'permanent';
+      that.es_close = es.onmessage = es.onerror = null; // EventSource reconnects automatically.
+
+      es.close();
+      es = null; // Safari and chrome < 15 crash if we close window before
+      // waiting for ES cleanup. See:
+      //   https://code.google.com/p/chromium/issues/detail?id=89155
+
+      utils.delay(200, function () {
+        that.dispatchEvent(new SimpleEvent('close', {
+          reason: reason
+        }));
+      });
+    };
+  };
+
+  EventSourceReceiver.prototype = new REventTarget();
+
+  EventSourceReceiver.prototype.abort = function () {
+    var that = this;
+
+    if (that.es_close) {
+      that.es_close({}, true);
+    }
+  }; //         [*] End of lib/trans-receiver-eventsource.js
+  //         [*] Including lib/trans-receiver-htmlfile.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var _is_ie_htmlfile_capable;
+
+  var isIeHtmlfileCapable = function () {
+    if (_is_ie_htmlfile_capable === undefined) {
+      if ('ActiveXObject' in _window) {
+        try {
+          _is_ie_htmlfile_capable = !!new ActiveXObject('htmlfile');
+        } catch (x) {}
+      } else {
+        _is_ie_htmlfile_capable = false;
+      }
+    }
+
+    return _is_ie_htmlfile_capable;
+  };
+
+  var HtmlfileReceiver = function (url) {
+    var that = this;
+    utils.polluteGlobalNamespace();
+    that.id = 'a' + utils.random_string(6, 26);
+    url += (url.indexOf('?') === -1 ? '?' : '&') + 'c=' + escape(WPrefix + '.' + that.id);
+    var constructor = isIeHtmlfileCapable() ? utils.createHtmlfile : utils.createIframe;
+    var iframeObj;
+    _window[WPrefix][that.id] = {
+      start: function () {
+        iframeObj.loaded();
+      },
+      message: function (data) {
+        that.dispatchEvent(new SimpleEvent('message', {
+          'data': data
+        }));
+      },
+      stop: function () {
+        that.iframe_close({}, 'network');
+      }
+    };
+
+    that.iframe_close = function (e, abort_reason) {
+      iframeObj.cleanup();
+      that.iframe_close = iframeObj = null;
+      delete _window[WPrefix][that.id];
+      that.dispatchEvent(new SimpleEvent('close', {
+        reason: abort_reason
+      }));
+    };
+
+    iframeObj = constructor(url, function (e) {
+      that.iframe_close({}, 'permanent');
+    });
+  };
+
+  HtmlfileReceiver.prototype = new REventTarget();
+
+  HtmlfileReceiver.prototype.abort = function () {
+    var that = this;
+
+    if (that.iframe_close) {
+      that.iframe_close({}, 'user');
+    }
+  }; //         [*] End of lib/trans-receiver-htmlfile.js
+  //         [*] Including lib/trans-receiver-xhr.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+
+
+  var XhrReceiver = function (url, AjaxObject) {
+    var that = this;
+    var buf_pos = 0;
+    that.xo = new AjaxObject('POST', url, null);
+
+    that.xo.onchunk = function (status, text) {
+      if (status !== 200) return;
+
+      while (1) {
+        var buf = text.slice(buf_pos);
+        var p = buf.indexOf('\n');
+        if (p === -1) break;
+        buf_pos += p + 1;
+        var msg = buf.slice(0, p);
+        that.dispatchEvent(new SimpleEvent('message', {
+          data: msg
+        }));
+      }
+    };
+
+    that.xo.onfinish = function (status, text) {
+      that.xo.onchunk(status, text);
+      that.xo = null;
+      var reason = status === 200 ? 'network' : 'permanent';
+      that.dispatchEvent(new SimpleEvent('close', {
+        reason: reason
+      }));
+    };
+  };
+
+  XhrReceiver.prototype = new REventTarget();
+
+  XhrReceiver.prototype.abort = function () {
+    var that = this;
+
+    if (that.xo) {
+      that.xo.close();
+      that.dispatchEvent(new SimpleEvent('close', {
+        reason: 'user'
+      }));
+      that.xo = null;
+    }
+  }; //         [*] End of lib/trans-receiver-xhr.js
+  //         [*] Including lib/test-hooks.js
+
+  /*
+   * ***** BEGIN LICENSE BLOCK *****
+   * Copyright (c) 2011-2012 VMware, Inc.
+   *
+   * For the license see COPYING.
+   * ***** END LICENSE BLOCK *****
+   */
+  // For testing
+
+
+  SockJS.getUtils = function () {
+    return utils;
+  };
+
+  SockJS.getIframeTransport = function () {
+    return IframeTransport;
+  }; //         [*] End of lib/test-hooks.js
+
+
+  return SockJS;
+}();
+
+if ('_sockjs_onload' in window) setTimeout(_sockjs_onload, 1); // AMD compliance
+
+if (typeof define === 'function' && define.amd) {
+  define('sockjs', [], function () {
+    return SockJS;
+  });
+} //     [*] End of lib/index.js
+// [*] End of lib/all.js
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 },"urls.js":function module(require,exports,module){
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                                //
-// packages/socket-stream-client/urls.js                                                                          //
-//                                                                                                                //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                  //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                     //
+// packages/socket-stream-client/urls.js                                                                               //
+//                                                                                                                     //
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                                                                                                       //
 module.export({
   toSockjsUrl: () => toSockjsUrl,
   toWebsocketUrl: () => toWebsocketUrl
@@ -535,7 +3254,7 @@ function toSockjsUrl(url) {
 function toWebsocketUrl(url) {
   return translateUrl(url, 'ws', 'websocket');
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }}}}},{
   "extensions": [
@@ -544,12 +3263,8 @@ function toWebsocketUrl(url) {
   ]
 });
 
-require("/node_modules/meteor/socket-stream-client/server.js");
 
 /* Exports */
 Package._define("socket-stream-client");
 
 })();
-
-//# sourceURL=meteor://💻app/packages/socket-stream-client.js
-//# sourceMappingURL=data:application/json;charset=utf8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm1ldGVvcjovL/CfkrthcHAvcGFja2FnZXMvc29ja2V0LXN0cmVhbS1jbGllbnQvc2VydmVyLmpzIiwibWV0ZW9yOi8v8J+Su2FwcC9wYWNrYWdlcy9zb2NrZXQtc3RyZWFtLWNsaWVudC9ub2RlLmpzIiwibWV0ZW9yOi8v8J+Su2FwcC9wYWNrYWdlcy9zb2NrZXQtc3RyZWFtLWNsaWVudC9jb21tb24uanMiLCJtZXRlb3I6Ly/wn5K7YXBwL3BhY2thZ2VzL3NvY2tldC1zdHJlYW0tY2xpZW50L3VybHMuanMiXSwibmFtZXMiOlsic2V0TWluaW11bUJyb3dzZXJWZXJzaW9ucyIsIm1vZHVsZTEiLCJsaW5rIiwidiIsImNocm9tZSIsImVkZ2UiLCJmaXJlZm94IiwiaWUiLCJtb2JpbGVTYWZhcmkiLCJwaGFudG9tanMiLCJzYWZhcmkiLCJlbGVjdHJvbiIsIm1vZHVsZSIsImlkIiwiZXhwb3J0IiwiQ2xpZW50U3RyZWFtIiwiTWV0ZW9yIiwidG9XZWJzb2NrZXRVcmwiLCJTdHJlYW1DbGllbnRDb21tb24iLCJjb25zdHJ1Y3RvciIsImVuZHBvaW50Iiwib3B0aW9ucyIsImNsaWVudCIsImhlYWRlcnMiLCJPYmplY3QiLCJjcmVhdGUiLCJucG1GYXllT3B0aW9ucyIsIl9pbml0Q29tbW9uIiwiX2xhdW5jaENvbm5lY3Rpb24iLCJzZW5kIiwiZGF0YSIsImN1cnJlbnRTdGF0dXMiLCJjb25uZWN0ZWQiLCJfY2hhbmdlVXJsIiwidXJsIiwiX29uQ29ubmVjdCIsIkVycm9yIiwiX2ZvcmNlZFRvRGlzY29ubmVjdCIsImNsb3NlIiwiX2NsZWFyQ29ubmVjdGlvblRpbWVyIiwic3RhdHVzIiwicmV0cnlDb3VudCIsInN0YXR1c0NoYW5nZWQiLCJmb3JFYWNoQ2FsbGJhY2siLCJjYWxsYmFjayIsIl9jbGVhbnVwIiwibWF5YmVFcnJvciIsImNvbm5lY3Rpb25UaW1lciIsImNsZWFyVGltZW91dCIsIl9nZXRQcm94eVVybCIsInRhcmdldFVybCIsInByb3h5IiwicHJvY2VzcyIsImVudiIsIkhUVFBfUFJPWFkiLCJodHRwX3Byb3h5Iiwibm9wcm94eSIsIk5PX1BST1hZIiwibm9fcHJveHkiLCJtYXRjaCIsIkhUVFBTX1BST1hZIiwiaHR0cHNfcHJveHkiLCJpbmRleE9mIiwiaXRlbSIsInNwbGl0IiwidHJpbSIsInJlcGxhY2UiLCJGYXllV2ViU29ja2V0IiwiTnBtIiwicmVxdWlyZSIsImRlZmxhdGUiLCJmYXllT3B0aW9ucyIsImV4dGVuc2lvbnMiLCJhc3NpZ24iLCJwcm94eVVybCIsIm9yaWdpbiIsInN1YnByb3RvY29scyIsIkNsaWVudCIsInNldFRpbWVvdXQiLCJfbG9zdENvbm5lY3Rpb24iLCJDb25uZWN0aW9uRXJyb3IiLCJDT05ORUNUX1RJTUVPVVQiLCJvbiIsImJpbmRFbnZpcm9ubWVudCIsImNsaWVudE9uSWZDdXJyZW50IiwiZXZlbnQiLCJkZXNjcmlwdGlvbiIsImVycm9yIiwiX2RvbnRQcmludEVycm9ycyIsIl9kZWJ1ZyIsIm1lc3NhZ2UiLCJfb2JqZWN0U3ByZWFkIiwiZGVmYXVsdCIsIlJldHJ5IiwiZm9yY2VkUmVjb25uZWN0RXJyb3IiLCJyZXRyeSIsIm5hbWUiLCJldmVudENhbGxiYWNrcyIsInB1c2giLCJjYiIsImxlbmd0aCIsImZvckVhY2giLCJjb25uZWN0VGltZW91dE1zIiwiUGFja2FnZSIsInRyYWNrZXIiLCJzdGF0dXNMaXN0ZW5lcnMiLCJUcmFja2VyIiwiRGVwZW5kZW5jeSIsImNoYW5nZWQiLCJfcmV0cnkiLCJyZWNvbm5lY3QiLCJfc29ja2pzT3B0aW9ucyIsIl9mb3JjZSIsImNsZWFyIiwiX3JldHJ5Tm93IiwiZGlzY29ubmVjdCIsIl9wZXJtYW5lbnQiLCJfZXJyb3IiLCJyZWFzb24iLCJfcmV0cnlMYXRlciIsIl9vbmxpbmUiLCJ0aW1lb3V0IiwicmV0cnlMYXRlciIsImJpbmQiLCJyZXRyeVRpbWUiLCJEYXRlIiwiZ2V0VGltZSIsImRlcGVuZCIsInRvU29ja2pzVXJsIiwidHJhbnNsYXRlVXJsIiwibmV3U2NoZW1lQmFzZSIsInN1YlBhdGgiLCJzdGFydHNXaXRoIiwiYWJzb2x1dGVVcmwiLCJzdWJzdHIiLCJkZHBVcmxNYXRjaCIsImh0dHBVcmxNYXRjaCIsIm5ld1NjaGVtZSIsInVybEFmdGVyRERQIiwic2xhc2hQb3MiLCJob3N0IiwicmVzdCIsIk1hdGgiLCJmbG9vciIsInJhbmRvbSIsInVybEFmdGVySHR0cCIsIl9yZWxhdGl2ZVRvU2l0ZVJvb3RVcmwiLCJlbmRzV2l0aCJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxNQUFJQSx5QkFBSjtBQUE4QkMsU0FBTyxDQUFDQyxJQUFSLENBQWEsd0JBQWIsRUFBc0M7QUFBQ0YsNkJBQXlCLENBQUNHLENBQUQsRUFBRztBQUFDSCwrQkFBeUIsR0FBQ0csQ0FBMUI7QUFBNEI7O0FBQTFELEdBQXRDLEVBQWtHLENBQWxHO0FBSTlCSCwyQkFBeUIsQ0FBQztBQUN4QkksVUFBTSxFQUFFLEVBRGdCO0FBRXhCQyxRQUFJLEVBQUUsRUFGa0I7QUFHeEJDLFdBQU8sRUFBRSxFQUhlO0FBSXhCQyxNQUFFLEVBQUUsRUFKb0I7QUFLeEJDLGdCQUFZLEVBQUUsQ0FBQyxDQUFELEVBQUksQ0FBSixDQUxVO0FBTXhCQyxhQUFTLEVBQUUsQ0FOYTtBQU94QkMsVUFBTSxFQUFFLENBUGdCO0FBUXhCQyxZQUFRLEVBQUUsQ0FBQyxDQUFELEVBQUksRUFBSjtBQVJjLEdBQUQsRUFTdEJDLE1BQU0sQ0FBQ0MsRUFUZSxDQUF6Qjs7Ozs7Ozs7Ozs7OztBQ0pBWixTQUFPLENBQUNhLE1BQVIsQ0FBZTtBQUFDQyxnQkFBWSxFQUFDLE1BQUlBO0FBQWxCLEdBQWY7QUFBZ0QsTUFBSUMsTUFBSjtBQUFXZixTQUFPLENBQUNDLElBQVIsQ0FBYSxlQUFiLEVBQTZCO0FBQUNjLFVBQU0sQ0FBQ2IsQ0FBRCxFQUFHO0FBQUNhLFlBQU0sR0FBQ2IsQ0FBUDtBQUFTOztBQUFwQixHQUE3QixFQUFtRCxDQUFuRDtBQUFzRCxNQUFJYyxjQUFKO0FBQW1CaEIsU0FBTyxDQUFD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cyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7XG4gIHNldE1pbmltdW1Ccm93c2VyVmVyc2lvbnMsXG59IGZyb20gXCJtZXRlb3IvbW9kZXJuLWJyb3dzZXJzXCI7XG5cbnNldE1pbmltdW1Ccm93c2VyVmVyc2lvbnMoe1xuICBjaHJvbWU6IDE2LFxuICBlZGdlOiAxMixcbiAgZmlyZWZveDogMTEsXG4gIGllOiAxMCxcbiAgbW9iaWxlU2FmYXJpOiBbNiwgMV0sXG4gIHBoYW50b21qczogMixcbiAgc2FmYXJpOiA3LFxuICBlbGVjdHJvbjogWzAsIDIwXSxcbn0sIG1vZHVsZS5pZCk7XG4iLCJpbXBvcnQgeyBNZXRlb3IgfSBmcm9tIFwibWV0ZW9yL21ldGVvclwiO1xuaW1wb3J0IHsgdG9XZWJzb2NrZXRVcmwgfSBmcm9tIFwiLi91cmxzLmpzXCI7XG5pbXBvcnQgeyBTdHJlYW1DbGllbnRDb21tb24gfSBmcm9tIFwiLi9jb21tb24uanNcIjtcblxuLy8gQHBhcmFtIGVuZHBvaW50IHtTdHJpbmd9IFVSTCB0byBNZXRlb3IgYXBwXG4vLyAgIFwiaHR0cDovL3N1YmRvbWFpbi5tZXRlb3IuY29tL1wiIG9yIFwiL1wiIG9yXG4vLyAgIFwiZGRwK3NvY2tqczovL2Zvby0qKi5tZXRlb3IuY29tL3NvY2tqc1wiXG4vL1xuLy8gV2UgZG8gc29tZSByZXdyaXRpbmcgb2YgdGhlIFVSTCB0byBldmVudHVhbGx5IG1ha2UgaXQgXCJ3czovL1wiIG9yIFwid3NzOi8vXCIsXG4vLyB3aGF0ZXZlciB3YXMgcGFzc2VkIGluLiAgQXQgdGhlIHZlcnkgbGVhc3QsIHdoYXQgTWV0ZW9yLmFic29sdXRlVXJsKCkgcmV0dXJuc1xuLy8gdXMgc2hvdWxkIHdvcmsuXG4vL1xuLy8gV2UgZG9uJ3QgZG8gYW55IGhlYXJ0YmVhdGluZy4gKFRoZSBsb2dpYyB0aGF0IGRpZCB0aGlzIGluIHNvY2tqcyB3YXMgcmVtb3ZlZCxcbi8vIGJlY2F1c2UgaXQgdXNlZCBhIGJ1aWx0LWluIHNvY2tqcyBtZWNoYW5pc20uIFdlIGNvdWxkIGRvIGl0IHdpdGggV2ViU29ja2V0XG4vLyBwaW5nIGZyYW1lcyBvciB3aXRoIEREUC1sZXZlbCBtZXNzYWdlcy4pXG5leHBvcnQgY2xhc3MgQ2xpZW50U3RyZWFtIGV4dGVuZHMgU3RyZWFtQ2xpZW50Q29tbW9uIHtcbiAgY29uc3RydWN0b3IoZW5kcG9pbnQsIG9wdGlvbnMpIHtcbiAgICBzdXBlcihvcHRpb25zKTtcblxuICAgIHRoaXMuY2xpZW50ID0gbnVsbDsgLy8gY3JlYXRlZCBpbiBfbGF1bmNoQ29ubmVjdGlvblxuICAgIHRoaXMuZW5kcG9pbnQgPSBlbmRwb2ludDtcblxuICAgIHRoaXMuaGVhZGVycyA9IHRoaXMub3B0aW9ucy5oZWFkZXJzIHx8IE9iamVjdC5jcmVhdGUobnVsbCk7XG4gICAgdGhpcy5ucG1GYXllT3B0aW9ucyA9IHRoaXMub3B0aW9ucy5ucG1GYXllT3B0aW9ucyB8fCBPYmplY3QuY3JlYXRlKG51bGwpO1xuXG4gICAgdGhpcy5faW5pdENvbW1vbih0aGlzLm9wdGlvbnMpO1xuXG4gICAgLy8vLyBLaWNrb2ZmIVxuICAgIHRoaXMuX2xhdW5jaENvbm5lY3Rpb24oKTtcbiAgfVxuXG4gIC8vIGRhdGEgaXMgYSB1dGY4IHN0cmluZy4gRGF0YSBzZW50IHdoaWxlIG5vdCBjb25uZWN0ZWQgaXMgZHJvcHBlZCBvblxuICAvLyB0aGUgZmxvb3IsIGFuZCBpdCBpcyB1cCB0aGUgdXNlciBvZiB0aGlzIEFQSSB0byByZXRyYW5zbWl0IGxvc3RcbiAgLy8gbWVzc2FnZXMgb24gJ3Jlc2V0J1xuICBzZW5kKGRhdGEpIHtcbiAgICBpZiAodGhpcy5jdXJyZW50U3RhdHVzLmNvbm5lY3RlZCkge1xuICAgICAgdGhpcy5jbGllbnQuc2VuZChkYXRhKTtcbiAgICB9XG4gIH1cblxuICAvLyBDaGFuZ2VzIHdoZXJlIHRoaXMgY29ubmVjdGlvbiBwb2ludHNcbiAgX2NoYW5nZVVybCh1cmwpIHtcbiAgICB0aGlzLmVuZHBvaW50ID0gdXJsO1xuICB9XG5cbiAgX29uQ29ubmVjdChjbGllbnQpIHtcbiAgICBpZiAoY2xpZW50ICE9PSB0aGlzLmNsaWVudCkge1xuICAgICAgLy8gVGhpcyBjb25uZWN0aW9uIGlzIG5vdCBmcm9tIHRoZSBsYXN0IGNhbGwgdG8gX2xhdW5jaENvbm5lY3Rpb24uXG4gICAgICAvLyBCdXQgX2xhdW5jaENvbm5lY3Rpb24gY2FsbHMgX2NsZWFudXAgd2hpY2ggY2xvc2VzIHByZXZpb3VzIGNvbm5lY3Rpb25zLlxuICAgICAgLy8gSXQncyBvdXIgYmVsaWVmIHRoYXQgdGhpcyBzdGlmbGVzIGZ1dHVyZSAnb3BlbicgZXZlbnRzLCBidXQgbWF5YmVcbiAgICAgIC8vIHdlIGFyZSB3cm9uZz9cbiAgICAgIHRocm93IG5ldyBFcnJvcignR290IG9wZW4gZnJvbSBpbmFjdGl2ZSBjbGllbnQgJyArICEhdGhpcy5jbGllbnQpO1xuICAgIH1cblxuICAgIGlmICh0aGlzLl9mb3JjZWRUb0Rpc2Nvbm5lY3QpIHtcbiAgICAgIC8vIFdlIHdlcmUgYXNrZWQgdG8gZGlzY29ubmVjdCBiZXR3ZWVuIHRyeWluZyB0byBvcGVuIHRoZSBjb25uZWN0aW9uIGFuZFxuICAgICAgLy8gYWN0dWFsbHkgb3BlbmluZyBpdC4gTGV0J3MganVzdCBwcmV0ZW5kIHRoaXMgbmV2ZXIgaGFwcGVuZWQuXG4gICAgICB0aGlzLmNsaWVudC5jbG9zZSgpO1xuICAgICAgdGhpcy5jbGllbnQgPSBudWxsO1xuICAgICAgcmV0dXJuO1xuICAgIH1cblxuICAgIGlmICh0aGlzLmN1cnJlbnRTdGF0dXMuY29ubmVjdGVkKSB7XG4gICAgICAvLyBXZSBhbHJlYWR5IGhhdmUgYSBjb25uZWN0aW9uLiBJdCBtdXN0IGhhdmUgYmVlbiB0aGUgY2FzZSB0aGF0IHdlXG4gICAgICAvLyBzdGFydGVkIHR3byBwYXJhbGxlbCBjb25uZWN0aW9uIGF0dGVtcHRzIChiZWNhdXNlIHdlIHdhbnRlZCB0b1xuICAgICAgLy8gJ3JlY29ubmVjdCBub3cnIG9uIGEgaGFuZ2luZyBjb25uZWN0aW9uIGFuZCB3ZSBoYWQgbm8gd2F5IHRvIGNhbmNlbCB0aGVcbiAgICAgIC8vIGNvbm5lY3Rpb24gYXR0ZW1wdC4pIEJ1dCB0aGlzIHNob3VsZG4ndCBoYXBwZW4gKHNpbWlsYXJseSB0byB0aGUgY2xpZW50XG4gICAgICAvLyAhPT0gdGhpcy5jbGllbnQgY2hlY2sgYWJvdmUpLlxuICAgICAgdGhyb3cgbmV3IEVycm9yKCdUd28gcGFyYWxsZWwgY29ubmVjdGlvbnM/Jyk7XG4gICAgfVxuXG4gICAgdGhpcy5fY2xlYXJDb25uZWN0aW9uVGltZXIoKTtcblxuICAgIC8vIHVwZGF0ZSBzdGF0dXNcbiAgICB0aGlzLmN1cnJlbnRTdGF0dXMuc3RhdHVzID0gJ2Nvbm5lY3RlZCc7XG4gICAgdGhpcy5jdXJyZW50U3RhdHVzLmNvbm5lY3RlZCA9IHRydWU7XG4gICAgdGhpcy5jdXJyZW50U3RhdHVzLnJldHJ5Q291bnQgPSAwO1xuICAgIHRoaXMuc3RhdHVzQ2hhbmdlZCgpO1xuXG4gICAgLy8gZmlyZSByZXNldHMuIFRoaXMgbXVzdCBjb21lIGFmdGVyIHN0YXR1cyBjaGFuZ2Ugc28gdGhhdCBjbGllbnRzXG4gICAgLy8gY2FuIGNhbGwgc2VuZCBmcm9tIHdpdGhpbiBhIHJlc2V0IGNhbGxiYWNrLlxuICAgIHRoaXMuZm9yRWFjaENhbGxiYWNrKCdyZXNldCcsIGNhbGxiYWNrID0+IHtcbiAgICAgIGNhbGxiYWNrKCk7XG4gICAgfSk7XG4gIH1cblxuICBfY2xlYW51cChtYXliZUVycm9yKSB7XG4gICAgdGhpcy5fY2xlYXJDb25uZWN0aW9uVGltZXIoKTtcbiAgICBpZiAodGhpcy5jbGllbnQpIHtcbiAgICAgIHZhciBjbGllbnQgPSB0aGlzLmNsaWVudDtcbiAgICAgIHRoaXMuY2xpZW50ID0gbnVsbDtcbiAgICAgIGNsaWVudC5jbG9zZSgpO1xuXG4gICAgICB0aGlzLmZvckVhY2hDYWxsYmFjaygnZGlzY29ubmVjdCcsIGNhbGxiYWNrID0+IHtcbiAgICAgICAgY2FsbGJhY2sobWF5YmVFcnJvcik7XG4gICAgICB9KTtcbiAgICB9XG4gIH1cblxuICBfY2xlYXJDb25uZWN0aW9uVGltZXIoKSB7XG4gICAgaWYgKHRoaXMuY29ubmVjdGlvblRpbWVyKSB7XG4gICAgICBjbGVhclRpbWVvdXQodGhpcy5jb25uZWN0aW9uVGltZXIpO1xuICAgICAgdGhpcy5jb25uZWN0aW9uVGltZXIgPSBudWxsO1xuICAgIH1cbiAgfVxuXG4gIF9nZXRQcm94eVVybCh0YXJnZXRVcmwpIHtcbiAgICAvLyBTaW1pbGFyIHRvIGNvZGUgaW4gdG9vbHMvaHR0cC1oZWxwZXJzLmpzLlxuICAgIHZhciBwcm94eSA9IHByb2Nlc3MuZW52LkhUVFBfUFJPWFkgfHwgcHJvY2Vzcy5lbnYuaHR0cF9wcm94eSB8fCBudWxsO1xuICAgIHZhciBub3Byb3h5ID0gcHJvY2Vzcy5lbnYuTk9fUFJPWFkgfHwgcHJvY2Vzcy5lbnYubm9fcHJveHkgfHwgbnVsbDtcbiAgICAvLyBpZiB3ZSdyZSBnb2luZyB0byBhIHNlY3VyZSB1cmwsIHRyeSB0aGUgaHR0cHNfcHJveHkgZW52IHZhcmlhYmxlIGZpcnN0LlxuICAgIGlmICh0YXJnZXRVcmwubWF0Y2goL153c3M6LynCoHx8IHRhcmdldFVybC5tYXRjaCgvXmh0dHBzOi8pKSB7XG4gICAgICBwcm94eSA9IHByb2Nlc3MuZW52LkhUVFBTX1BST1hZIHx8IHByb2Nlc3MuZW52Lmh0dHBzX3Byb3h5IHx8IHByb3h5O1xuICAgIH1cbiAgICBpZiAodGFyZ2V0VXJsLmluZGV4T2YoJ2xvY2FsaG9zdCcpICE9IC0xIHx8wqB0YXJnZXRVcmwuaW5kZXhPZignMTI3LjAuMC4xJykgIT0gLTEpIHtcbiAgICAgIHJldHVybiBudWxsO1xuICAgIH1cbiAgICBpZiAobm9wcm94eSkge1xuICAgICAgZm9yIChsZXQgaXRlbSBvZiBub3Byb3h5LnNwbGl0KCcsJykpIHtcbiAgICAgICAgaWYgKHRhcmdldFVybC5pbmRleE9mKGl0ZW0udHJpbSgpLnJlcGxhY2UoL1xcKi8sICcnKSkgIT09IC0xKSB7XG4gICAgICAgICAgcHJveHkgPSBudWxsO1xuICAgICAgICB9XG4gICAgICB9XG4gICAgfVxuICAgIHJldHVybiBwcm94eTtcbiAgfVxuXG4gIF9sYXVuY2hDb25uZWN0aW9uKCkge1xuICAgIHRoaXMuX2NsZWFudXAoKTsgLy8gY2xlYW51cCB0aGUgb2xkIHNvY2tldCwgaWYgdGhlcmUgd2FzIG9uZS5cblxuICAgIC8vIFNpbmNlIHNlcnZlci10by1zZXJ2ZXIgRERQIGlzIHN0aWxsIGFuIGV4cGVyaW1lbnRhbCBmZWF0dXJlLCB3ZSBvbmx5XG4gICAgLy8gcmVxdWlyZSB0aGUgbW9kdWxlIGlmIHdlIGFjdHVhbGx5IGNyZWF0ZSBhIHNlcnZlci10by1zZXJ2ZXJcbiAgICAvLyBjb25uZWN0aW9uLlxuICAgIHZhciBGYXllV2ViU29ja2V0ID0gTnBtLnJlcXVpcmUoJ2ZheWUtd2Vic29ja2V0Jyk7XG4gICAgdmFyIGRlZmxhdGUgPSBOcG0ucmVxdWlyZSgncGVybWVzc2FnZS1kZWZsYXRlJyk7XG5cbiAgICB2YXIgdGFyZ2V0VXJsID0gdG9XZWJzb2NrZXRVcmwodGhpcy5lbmRwb2ludCk7XG4gICAgdmFyIGZheWVPcHRpb25zID0ge1xuICAgICAgaGVhZGVyczogdGhpcy5oZWFkZXJzLFxuICAgICAgZXh0ZW5zaW9uczogW2RlZmxhdGVdXG4gICAgfTtcbiAgICBmYXllT3B0aW9ucyA9IE9iamVjdC5hc3NpZ24oZmF5ZU9wdGlvbnMsIHRoaXMubnBtRmF5ZU9wdGlvbnMpO1xuICAgIHZhciBwcm94eVVybCA9IHRoaXMuX2dldFByb3h5VXJsKHRhcmdldFVybCk7XG4gICAgaWYgKHByb3h5VXJsKSB7XG4gICAgICBmYXllT3B0aW9ucy5wcm94eSA9IHsgb3JpZ2luOiBwcm94eVVybCB9O1xuICAgIH1cblxuICAgIC8vIFdlIHdvdWxkIGxpa2UgdG8gc3BlY2lmeSAnZGRwJyBhcyB0aGUgc3VicHJvdG9jb2wgaGVyZS4gVGhlIG5wbSBtb2R1bGUgd2VcbiAgICAvLyB1c2VkIHRvIHVzZSBhcyBhIGNsaWVudCB3b3VsZCBmYWlsIHRoZSBoYW5kc2hha2UgaWYgd2UgYXNrIGZvciBhXG4gICAgLy8gc3VicHJvdG9jb2wgYW5kIHRoZSBzZXJ2ZXIgZG9lc24ndCBzZW5kIG9uZSBiYWNrIChhbmQgc29ja2pzIGRvZXNuJ3QpLlxuICAgIC8vIEZheWUgZG9lc24ndCBoYXZlIHRoYXQgYmVoYXZpb3I7IGl0J3MgdW5jbGVhciBmcm9tIHJlYWRpbmcgUkZDIDY0NTUgaWZcbiAgICAvLyBGYXllIGlzIGVycm9uZW91cyBvciBub3QuICBTbyBmb3Igbm93LCB3ZSBkb24ndCBzcGVjaWZ5IHByb3RvY29scy5cbiAgICB2YXIgc3VicHJvdG9jb2xzID0gW107XG5cbiAgICB2YXIgY2xpZW50ID0gKHRoaXMuY2xpZW50ID0gbmV3IEZheWVXZWJTb2NrZXQuQ2xpZW50KFxuICAgICAgdGFyZ2V0VXJsLFxuICAgICAgc3VicHJvdG9jb2xzLFxuICAgICAgZmF5ZU9wdGlvbnNcbiAgICApKTtcblxuICAgIHRoaXMuX2NsZWFyQ29ubmVjdGlvblRpbWVyKCk7XG4gICAgdGhpcy5jb25uZWN0aW9uVGltZXIgPSBNZXRlb3Iuc2V0VGltZW91dCgoKSA9PiB7XG4gICAgICB0aGlzLl9sb3N0Q29ubmVjdGlvbihuZXcgdGhpcy5Db25uZWN0aW9uRXJyb3IoJ0REUCBjb25uZWN0aW9uIHRpbWVkIG91dCcpKTtcbiAgICB9LCB0aGlzLkNPTk5FQ1RfVElNRU9VVCk7XG5cbiAgICB0aGlzLmNsaWVudC5vbihcbiAgICAgICdvcGVuJyxcbiAgICAgIE1ldGVvci5iaW5kRW52aXJvbm1lbnQoKCkgPT4ge1xuICAgICAgICByZXR1cm4gdGhpcy5fb25Db25uZWN0KGNsaWVudCk7XG4gICAgICB9LCAnc3RyZWFtIGNvbm5lY3QgY2FsbGJhY2snKVxuICAgICk7XG5cbiAgICB2YXIgY2xpZW50T25JZkN1cnJlbnQgPSAoZXZlbnQsIGRlc2NyaXB0aW9uLCBjYWxsYmFjaykgPT4ge1xuICAgICAgdGhpcy5jbGllbnQub24oXG4gICAgICAgIGV2ZW50LFxuICAgICAgICBNZXRlb3IuYmluZEVudmlyb25tZW50KCguLi5hcmdzKSA9PiB7XG4gICAgICAgICAgLy8gSWdub3JlIGV2ZW50cyBmcm9tIGFueSBjb25uZWN0aW9uIHdlJ3ZlIGFscmVhZHkgY2xlYW5lZCB1cC5cbiAgICAgICAgICBpZiAoY2xpZW50ICE9PSB0aGlzLmNsaWVudCkgcmV0dXJuO1xuICAgICAgICAgIGNhbGxiYWNrKC4uLmFyZ3MpO1xuICAgICAgICB9LCBkZXNjcmlwdGlvbilcbiAgICAgICk7XG4gICAgfTtcblxuICAgIGNsaWVudE9uSWZDdXJyZW50KCdlcnJvcicsICdzdHJlYW0gZXJyb3IgY2FsbGJhY2snLCBlcnJvciA9PiB7XG4gICAgICBpZiAoIXRoaXMub3B0aW9ucy5fZG9udFByaW50RXJyb3JzKVxuICAgICAgICBNZXRlb3IuX2RlYnVnKCdzdHJlYW0gZXJyb3InLCBlcnJvci5tZXNzYWdlKTtcblxuICAgICAgLy8gRmF5ZSdzICdlcnJvcicgb2JqZWN0IGlzIG5vdCBhIEpTIGVycm9yIChhbmQgYW1vbmcgb3RoZXIgdGhpbmdzLFxuICAgICAgLy8gZG9lc24ndCBzdHJpbmdpZnkgd2VsbCkuIENvbnZlcnQgaXQgdG8gb25lLlxuICAgICAgdGhpcy5fbG9zdENvbm5lY3Rpb24obmV3IHRoaXMuQ29ubmVjdGlvbkVycm9yKGVycm9yLm1lc3NhZ2UpKTtcbiAgICB9KTtcblxuICAgIGNsaWVudE9uSWZDdXJyZW50KCdjbG9zZScsICdzdHJlYW0gY2xvc2UgY2FsbGJhY2snLCAoKSA9PiB7XG4gICAgICB0aGlzLl9sb3N0Q29ubmVjdGlvbigpO1xuICAgIH0pO1xuXG4gICAgY2xpZW50T25JZkN1cnJlbnQoJ21lc3NhZ2UnLCAnc3RyZWFtIG1lc3NhZ2UgY2FsbGJhY2snLCBtZXNzYWdlID0+IHtcbiAgICAgIC8vIElnbm9yZSBiaW5hcnkgZnJhbWVzLCB3aGVyZSBtZXNzYWdlLmRhdGEgaXMgYSBCdWZmZXJcbiAgICAgIGlmICh0eXBlb2YgbWVzc2FnZS5kYXRhICE9PSAnc3RyaW5nJykgcmV0dXJuO1xuXG4gICAgICB0aGlzLmZvckVhY2hDYWxsYmFjaygnbWVzc2FnZScsIGNhbGxiYWNrID0+IHtcbiAgICAgICAgY2FsbGJhY2sobWVzc2FnZS5kYXRhKTtcbiAgICAgIH0pO1xuICAgIH0pO1xuICB9XG59XG4iLCJpbXBvcnQgeyBSZXRyeSB9IGZyb20gJ21ldGVvci9yZXRyeSc7XG5cbmNvbnN0IGZvcmNlZFJlY29ubmVjdEVycm9yID0gbmV3IEVycm9yKFwiZm9yY2VkIHJlY29ubmVjdFwiKTtcblxuZXhwb3J0IGNsYXNzIFN0cmVhbUNsaWVudENvbW1vbiB7XG4gIGNvbnN0cnVjdG9yKG9wdGlvbnMpIHtcbiAgICB0aGlzLm9wdGlvbnMgPSB7XG4gICAgICByZXRyeTogdHJ1ZSxcbiAgICAgIC4uLihvcHRpb25zIHx8IG51bGwpLFxuICAgIH07XG5cbiAgICB0aGlzLkNvbm5lY3Rpb25FcnJvciA9XG4gICAgICBvcHRpb25zICYmIG9wdGlvbnMuQ29ubmVjdGlvbkVycm9yIHx8IEVycm9yO1xuICB9XG5cbiAgLy8gUmVnaXN0ZXIgZm9yIGNhbGxiYWNrcy5cbiAgb24obmFtZSwgY2FsbGJhY2spIHtcbiAgICBpZiAobmFtZSAhPT0gJ21lc3NhZ2UnICYmIG5hbWUgIT09ICdyZXNldCcgJiYgbmFtZSAhPT0gJ2Rpc2Nvbm5lY3QnKVxuICAgICAgdGhyb3cgbmV3IEVycm9yKCd1bmtub3duIGV2ZW50IHR5cGU6ICcgKyBuYW1lKTtcblxuICAgIGlmICghdGhpcy5ldmVudENhbGxiYWNrc1tuYW1lXSkgdGhpcy5ldmVudENhbGxiYWNrc1tuYW1lXSA9IFtdO1xuICAgIHRoaXMuZXZlbnRDYWxsYmFja3NbbmFtZV0ucHVzaChjYWxsYmFjayk7XG4gIH1cblxuICBmb3JFYWNoQ2FsbGJhY2sobmFtZSwgY2IpIHtcbiAgICBpZiAoIXRoaXMuZXZlbnRDYWxsYmFja3NbbmFtZV0gfHwgIXRoaXMuZXZlbnRDYWxsYmFja3NbbmFtZV0ubGVuZ3RoKSB7XG4gICAgICByZXR1cm47XG4gICAgfVxuXG4gICAgdGhpcy5ldmVudENhbGxiYWNrc1tuYW1lXS5mb3JFYWNoKGNiKTtcbiAgfVxuXG4gIF9pbml0Q29tbW9uKG9wdGlvbnMpIHtcbiAgICBvcHRpb25zID0gb3B0aW9ucyB8fCBPYmplY3QuY3JlYXRlKG51bGwpO1xuXG4gICAgLy8vLyBDb25zdGFudHNcblxuICAgIC8vIGhvdyBsb25nIHRvIHdhaXQgdW50aWwgd2UgZGVjbGFyZSB0aGUgY29ubmVjdGlvbiBhdHRlbXB0XG4gICAgLy8gZmFpbGVkLlxuICAgIHRoaXMuQ09OTkVDVF9USU1FT1VUID0gb3B0aW9ucy5jb25uZWN0VGltZW91dE1zIHx8IDEwMDAwO1xuXG4gICAgdGhpcy5ldmVudENhbGxiYWNrcyA9IE9iamVjdC5jcmVhdGUobnVsbCk7IC8vIG5hbWUgLT4gW2NhbGxiYWNrXVxuXG4gICAgdGhpcy5fZm9yY2VkVG9EaXNjb25uZWN0ID0gZmFsc2U7XG5cbiAgICAvLy8vIFJlYWN0aXZlIHN0YXR1c1xuICAgIHRoaXMuY3VycmVudFN0YXR1cyA9IHtcbiAgICAgIHN0YXR1czogJ2Nvbm5lY3RpbmcnLFxuICAgICAgY29ubmVjdGVkOiBmYWxzZSxcbiAgICAgIHJldHJ5Q291bnQ6IDBcbiAgICB9O1xuXG4gICAgaWYgKFBhY2thZ2UudHJhY2tlcikge1xuICAgICAgdGhpcy5zdGF0dXNMaXN0ZW5lcnMgPSBuZXcgUGFja2FnZS50cmFja2VyLlRyYWNrZXIuRGVwZW5kZW5jeSgpO1xuICAgIH1cblxuICAgIHRoaXMuc3RhdHVzQ2hhbmdlZCA9ICgpID0+IHtcbiAgICAgIGlmICh0aGlzLnN0YXR1c0xpc3RlbmVycykge1xuICAgICAgICB0aGlzLnN0YXR1c0xpc3RlbmVycy5jaGFuZ2VkKCk7XG4gICAgICB9XG4gICAgfTtcblxuICAgIC8vLy8gUmV0cnkgbG9naWNcbiAgICB0aGlzLl9yZXRyeSA9IG5ldyBSZXRyeSgpO1xuICAgIHRoaXMuY29ubmVjdGlvblRpbWVyID0gbnVsbDtcbiAgfVxuXG4gIC8vIFRyaWdnZXIgYSByZWNvbm5lY3QuXG4gIHJlY29ubmVjdChvcHRpb25zKSB7XG4gICAgb3B0aW9ucyA9IG9wdGlvbnMgfHwgT2JqZWN0LmNyZWF0ZShudWxsKTtcblxuICAgIGlmIChvcHRpb25zLnVybCkge1xuICAgICAgdGhpcy5fY2hhbmdlVXJsKG9wdGlvbnMudXJsKTtcbiAgICB9XG5cbiAgICBpZiAob3B0aW9ucy5fc29ja2pzT3B0aW9ucykge1xuICAgICAgdGhpcy5vcHRpb25zLl9zb2NranNPcHRpb25zID0gb3B0aW9ucy5fc29ja2pzT3B0aW9ucztcbiAgICB9XG5cbiAgICBpZiAodGhpcy5jdXJyZW50U3RhdHVzLmNvbm5lY3RlZCkge1xuICAgICAgaWYgKG9wdGlvbnMuX2ZvcmNlIHx8IG9wdGlvbnMudXJsKSB7XG4gICAgICAgIHRoaXMuX2xvc3RDb25uZWN0aW9uKGZvcmNlZFJlY29ubmVjdEVycm9yKTtcbiAgICAgIH1cbiAgICAgIHJldHVybjtcbiAgICB9XG5cbiAgICAvLyBpZiB3ZSdyZSBtaWQtY29ubmVjdGlvbiwgc3RvcCBpdC5cbiAgICBpZiAodGhpcy5jdXJyZW50U3RhdHVzLnN0YXR1cyA9PT0gJ2Nvbm5lY3RpbmcnKSB7XG4gICAgICAvLyBQcmV0ZW5kIGl0J3MgYSBjbGVhbiBjbG9zZS5cbiAgICAgIHRoaXMuX2xvc3RDb25uZWN0aW9uKCk7XG4gICAgfVxuXG4gICAgdGhpcy5fcmV0cnkuY2xlYXIoKTtcbiAgICB0aGlzLmN1cnJlbnRTdGF0dXMucmV0cnlDb3VudCAtPSAxOyAvLyBkb24ndCBjb3VudCBtYW51YWwgcmV0cmllc1xuICAgIHRoaXMuX3JldHJ5Tm93KCk7XG4gIH1cblxuICBkaXNjb25uZWN0KG9wdGlvbnMpIHtcbiAgICBvcHRpb25zID0gb3B0aW9ucyB8fCBPYmplY3QuY3JlYXRlKG51bGwpO1xuXG4gICAgLy8gRmFpbGVkIGlzIHBlcm1hbmVudC4gSWYgd2UncmUgZmFpbGVkLCBkb24ndCBsZXQgcGVvcGxlIGdvIGJhY2tcbiAgICAvLyBvbmxpbmUgYnkgY2FsbGluZyAnZGlzY29ubmVjdCcgdGhlbiAncmVjb25uZWN0Jy5cbiAgICBpZiAodGhpcy5fZm9yY2VkVG9EaXNjb25uZWN0KSByZXR1cm47XG5cbiAgICAvLyBJZiBfcGVybWFuZW50IGlzIHNldCwgcGVybWFuZW50bHkgZGlzY29ubmVjdCBhIHN0cmVhbS4gT25jZSBhIHN0cmVhbVxuICAgIC8vIGlzIGZvcmNlZCB0byBkaXNjb25uZWN0LCBpdCBjYW4gbmV2ZXIgcmVjb25uZWN0LiBUaGlzIGlzIGZvclxuICAgIC8vIGVycm9yIGNhc2VzIHN1Y2ggYXMgZGRwIHZlcnNpb24gbWlzbWF0Y2gsIHdoZXJlIHRyeWluZyBhZ2FpblxuICAgIC8vIHdvbid0IGZpeCB0aGUgcHJvYmxlbS5cbiAgICBpZiAob3B0aW9ucy5fcGVybWFuZW50KSB7XG4gICAgICB0aGlzLl9mb3JjZWRUb0Rpc2Nvbm5lY3QgPSB0cnVlO1xuICAgIH1cblxuICAgIHRoaXMuX2NsZWFudXAoKTtcbiAgICB0aGlzLl9yZXRyeS5jbGVhcigpO1xuXG4gICAgdGhpcy5jdXJyZW50U3RhdHVzID0ge1xuICAgICAgc3RhdHVzOiBvcHRpb25zLl9wZXJtYW5lbnQgPyAnZmFpbGVkJyA6ICdvZmZsaW5lJyxcbiAgICAgIGNvbm5lY3RlZDogZmFsc2UsXG4gICAgICByZXRyeUNvdW50OiAwXG4gICAgfTtcblxuICAgIGlmIChvcHRpb25zLl9wZXJtYW5lbnQgJiYgb3B0aW9ucy5fZXJyb3IpXG4gICAgICB0aGlzLmN1cnJlbnRTdGF0dXMucmVhc29uID0gb3B0aW9ucy5fZXJyb3I7XG5cbiAgICB0aGlzLnN0YXR1c0NoYW5nZWQoKTtcbiAgfVxuXG4gIC8vIG1heWJlRXJyb3IgaXMgc2V0IHVubGVzcyBpdCdzIGEgY2xlYW4gcHJvdG9jb2wtbGV2ZWwgY2xvc2UuXG4gIF9sb3N0Q29ubmVjdGlvbihtYXliZUVycm9yKSB7XG4gICAgdGhpcy5fY2xlYW51cChtYXliZUVycm9yKTtcbiAgICB0aGlzLl9yZXRyeUxhdGVyKG1heWJlRXJyb3IpOyAvLyBzZXRzIHN0YXR1cy4gbm8gbmVlZCB0byBkbyBpdCBoZXJlLlxuICB9XG5cbiAgLy8gZmlyZWQgd2hlbiB3ZSBkZXRlY3QgdGhhdCB3ZSd2ZSBnb25lIG9ubGluZS4gdHJ5IHRvIHJlY29ubmVjdFxuICAvLyBpbW1lZGlhdGVseS5cbiAgX29ubGluZSgpIHtcbiAgICAvLyBpZiB3ZSd2ZSByZXF1ZXN0ZWQgdG8gYmUgb2ZmbGluZSBieSBkaXNjb25uZWN0aW5nLCBkb24ndCByZWNvbm5lY3QuXG4gICAgaWYgKHRoaXMuY3VycmVudFN0YXR1cy5zdGF0dXMgIT0gJ29mZmxpbmUnKSB0aGlzLnJlY29ubmVjdCgpO1xuICB9XG5cbiAgX3JldHJ5TGF0ZXIobWF5YmVFcnJvcikge1xuICAgIHZhciB0aW1lb3V0ID0gMDtcbiAgICBpZiAodGhpcy5vcHRpb25zLnJldHJ5IHx8XG4gICAgICAgIG1heWJlRXJyb3IgPT09IGZvcmNlZFJlY29ubmVjdEVycm9yKSB7XG4gICAgICB0aW1lb3V0ID0gdGhpcy5fcmV0cnkucmV0cnlMYXRlcihcbiAgICAgICAgdGhpcy5jdXJyZW50U3RhdHVzLnJldHJ5Q291bnQsXG4gICAgICAgIHRoaXMuX3JldHJ5Tm93LmJpbmQodGhpcylcbiAgICAgICk7XG4gICAgICB0aGlzLmN1cnJlbnRTdGF0dXMuc3RhdHVzID0gJ3dhaXRpbmcnO1xuICAgICAgdGhpcy5jdXJyZW50U3RhdHVzLnJldHJ5VGltZSA9IG5ldyBEYXRlKCkuZ2V0VGltZSgpICsgdGltZW91dDtcbiAgICB9IGVsc2Uge1xuICAgICAgdGhpcy5jdXJyZW50U3RhdHVzLnN0YXR1cyA9ICdmYWlsZWQnO1xuICAgICAgZGVsZXRlIHRoaXMuY3VycmVudFN0YXR1cy5yZXRyeVRpbWU7XG4gICAgfVxuXG4gICAgdGhpcy5jdXJyZW50U3RhdHVzLmNvbm5lY3RlZCA9IGZhbHNlO1xuICAgIHRoaXMuc3RhdHVzQ2hhbmdlZCgpO1xuICB9XG5cbiAgX3JldHJ5Tm93KCkge1xuICAgIGlmICh0aGlzLl9mb3JjZWRUb0Rpc2Nvbm5lY3QpIHJldHVybjtcblxuICAgIHRoaXMuY3VycmVudFN0YXR1cy5yZXRyeUNvdW50ICs9IDE7XG4gICAgdGhpcy5jdXJyZW50U3RhdHVzLnN0YXR1cyA9ICdjb25uZWN0aW5nJztcbiAgICB0aGlzLmN1cnJlbnRTdGF0dXMuY29ubmVjdGVkID0gZmFsc2U7XG4gICAgZGVsZXRlIHRoaXMuY3VycmVudFN0YXR1cy5yZXRyeVRpbWU7XG4gICAgdGhpcy5zdGF0dXNDaGFuZ2VkKCk7XG5cbiAgICB0aGlzLl9sYXVuY2hDb25uZWN0aW9uKCk7XG4gIH1cblxuICAvLyBHZXQgY3VycmVudCBzdGF0dXMuIFJlYWN0aXZlLlxuICBzdGF0dXMoKSB7XG4gICAgaWYgKHRoaXMuc3RhdHVzTGlzdGVuZXJzKSB7XG4gICAgICB0aGlzLnN0YXR1c0xpc3RlbmVycy5kZXBlbmQoKTtcbiAgICB9XG4gICAgcmV0dXJuIHRoaXMuY3VycmVudFN0YXR1cztcbiAgfVxufVxuIiwiLy8gQHBhcmFtIHVybCB7U3RyaW5nfSBVUkwgdG8gTWV0ZW9yIGFwcCwgZWc6XG4vLyAgIFwiL1wiIG9yIFwibWFkZXdpdGgubWV0ZW9yLmNvbVwiIG9yIFwiaHR0cHM6Ly9mb28ubWV0ZW9yLmNvbVwiXG4vLyAgIG9yIFwiZGRwK3NvY2tqczovL2RkcC0tKioqKi1mb28ubWV0ZW9yLmNvbS9zb2NranNcIlxuLy8gQHJldHVybnMge1N0cmluZ30gVVJMIHRvIHRoZSBlbmRwb2ludCB3aXRoIHRoZSBzcGVjaWZpYyBzY2hlbWUgYW5kIHN1YlBhdGgsIGUuZy5cbi8vIGZvciBzY2hlbWUgXCJodHRwXCIgYW5kIHN1YlBhdGggXCJzb2NranNcIlxuLy8gICBcImh0dHA6Ly9zdWJkb21haW4ubWV0ZW9yLmNvbS9zb2NranNcIiBvciBcIi9zb2NranNcIlxuLy8gICBvciBcImh0dHBzOi8vZGRwLS0xMjM0LWZvby5tZXRlb3IuY29tL3NvY2tqc1wiXG5mdW5jdGlvbiB0cmFuc2xhdGVVcmwodXJsLCBuZXdTY2hlbWVCYXNlLCBzdWJQYXRoKSB7XG4gIGlmICghbmV3U2NoZW1lQmFzZSkge1xuICAgIG5ld1NjaGVtZUJhc2UgPSAnaHR0cCc7XG4gIH1cblxuICBpZiAoc3ViUGF0aCAhPT0gXCJzb2NranNcIiAmJiB1cmwuc3RhcnRzV2l0aChcIi9cIikpIHtcbiAgICB1cmwgPSBNZXRlb3IuYWJzb2x1dGVVcmwodXJsLnN1YnN0cigxKSk7XG4gIH1cblxuICB2YXIgZGRwVXJsTWF0Y2ggPSB1cmwubWF0Y2goL15kZHAoaT8pXFwrc29ja2pzOlxcL1xcLy8pO1xuICB2YXIgaHR0cFVybE1hdGNoID0gdXJsLm1hdGNoKC9eaHR0cChzPyk6XFwvXFwvLyk7XG4gIHZhciBuZXdTY2hlbWU7XG4gIGlmIChkZHBVcmxNYXRjaCkge1xuICAgIC8vIFJlbW92ZSBzY2hlbWUgYW5kIHNwbGl0IG9mZiB0aGUgaG9zdC5cbiAgICB2YXIgdXJsQWZ0ZXJERFAgPSB1cmwuc3Vic3RyKGRkcFVybE1hdGNoWzBdLmxlbmd0aCk7XG4gICAgbmV3U2NoZW1lID0gZGRwVXJsTWF0Y2hbMV0gPT09ICdpJyA/IG5ld1NjaGVtZUJhc2UgOiBuZXdTY2hlbWVCYXNlICsgJ3MnO1xuICAgIHZhciBzbGFzaFBvcyA9IHVybEFmdGVyRERQLmluZGV4T2YoJy8nKTtcbiAgICB2YXIgaG9zdCA9IHNsYXNoUG9zID09PSAtMSA/IHVybEFmdGVyRERQIDogdXJsQWZ0ZXJERFAuc3Vic3RyKDAsIHNsYXNoUG9zKTtcbiAgICB2YXIgcmVzdCA9IHNsYXNoUG9zID09PSAtMSA/ICcnIDogdXJsQWZ0ZXJERFAuc3Vic3RyKHNsYXNoUG9zKTtcblxuICAgIC8vIEluIHRoZSBob3N0IChPTkxZISksIGNoYW5nZSAnKicgY2hhcmFjdGVycyBpbnRvIHJhbmRvbSBkaWdpdHMuIFRoaXNcbiAgICAvLyBhbGxvd3MgZGlmZmVyZW50IHN0cmVhbSBjb25uZWN0aW9ucyB0byBjb25uZWN0IHRvIGRpZmZlcmVudCBob3N0bmFtZXNcbiAgICAvLyBhbmQgYXZvaWQgYnJvd3NlciBwZXItaG9zdG5hbWUgY29ubmVjdGlvbiBsaW1pdHMuXG4gICAgaG9zdCA9IGhvc3QucmVwbGFjZSgvXFwqL2csICgpID0+IE1hdGguZmxvb3IoTWF0aC5yYW5kb20oKSAqIDEwKSk7XG5cbiAgICByZXR1cm4gbmV3U2NoZW1lICsgJzovLycgKyBob3N0ICsgcmVzdDtcbiAgfSBlbHNlIGlmIChodHRwVXJsTWF0Y2gpIHtcbiAgICBuZXdTY2hlbWUgPSAhaHR0cFVybE1hdGNoWzFdID8gbmV3U2NoZW1lQmFzZSA6IG5ld1NjaGVtZUJhc2UgKyAncyc7XG4gICAgdmFyIHVybEFmdGVySHR0cCA9IHVybC5zdWJzdHIoaHR0cFVybE1hdGNoWzBdLmxlbmd0aCk7XG4gICAgdXJsID0gbmV3U2NoZW1lICsgJzovLycgKyB1cmxBZnRlckh0dHA7XG4gIH1cblxuICAvLyBQcmVmaXggRlFETnMgYnV0IG5vdCByZWxhdGl2ZSBVUkxzXG4gIGlmICh1cmwuaW5kZXhPZignOi8vJykgPT09IC0xICYmICF1cmwuc3RhcnRzV2l0aCgnLycpKSB7XG4gICAgdXJsID0gbmV3U2NoZW1lQmFzZSArICc6Ly8nICsgdXJsO1xuICB9XG5cbiAgLy8gWFhYIFRoaXMgaXMgbm90IHdoYXQgd2Ugc2hvdWxkIGJlIGRvaW5nOiBpZiBJIGhhdmUgYSBzaXRlXG4gIC8vIGRlcGxveWVkIGF0IFwiL2Zvb1wiLCB0aGVuIEREUC5jb25uZWN0KFwiL1wiKSBzaG91bGQgYWN0dWFsbHkgY29ubmVjdFxuICAvLyB0byBcIi9cIiwgbm90IHRvIFwiL2Zvb1wiLiBcIi9cIiBpcyBhbiBhYnNvbHV0ZSBwYXRoLiAoQ29udHJhc3Q6IGlmXG4gIC8vIGRlcGxveWVkIGF0IFwiL2Zvb1wiLCBpdCB3b3VsZCBiZSByZWFzb25hYmxlIGZvciBERFAuY29ubmVjdChcImJhclwiKVxuICAvLyB0byBjb25uZWN0IHRvIFwiL2Zvby9iYXJcIikuXG4gIC8vXG4gIC8vIFdlIHNob3VsZCBtYWtlIHRoaXMgcHJvcGVybHkgaG9ub3IgYWJzb2x1dGUgcGF0aHMgcmF0aGVyIHRoYW5cbiAgLy8gZm9yY2luZyB0aGUgcGF0aCB0byBiZSByZWxhdGl2ZSB0byB0aGUgc2l0ZSByb290LiBTaW11bHRhbmVvdXNseSxcbiAgLy8gd2Ugc2hvdWxkIHNldCBERFBfREVGQVVMVF9DT05ORUNUSU9OX1VSTCB0byBpbmNsdWRlIHRoZSBzaXRlXG4gIC8vIHJvb3QuIFNlZSBhbHNvIGNsaWVudF9jb252ZW5pZW5jZS5qcyAjUmF0aW9uYWxpemluZ1JlbGF0aXZlRERQVVJMc1xuICB1cmwgPSBNZXRlb3IuX3JlbGF0aXZlVG9TaXRlUm9vdFVybCh1cmwpO1xuXG4gIGlmICh1cmwuZW5kc1dpdGgoJy8nKSkgcmV0dXJuIHVybCArIHN1YlBhdGg7XG4gIGVsc2UgcmV0dXJuIHVybCArICcvJyArIHN1YlBhdGg7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiB0b1NvY2tqc1VybCh1cmwpIHtcbiAgcmV0dXJuIHRyYW5zbGF0ZVVybCh1cmwsICdodHRwJywgJ3NvY2tqcycpO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gdG9XZWJzb2NrZXRVcmwodXJsKSB7XG4gIHJldHVybiB0cmFuc2xhdGVVcmwodXJsLCAnd3MnLCAnd2Vic29ja2V0Jyk7XG59XG4iXX0=

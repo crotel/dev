@@ -13,6 +13,6 @@
 
 
 /* Exports */
-Package._define("accounts-ui");
+Package._define("less");
 
 })();

@@ -1,3 +1,13 @@
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// This is a generated file. You can view the original                  //
+// source in your browser if your browser supports source maps.         //
+// Source maps are supported by all recent versions of Chrome, Safari,  //
+// and Firefox, and by Internet Explorer 11.                            //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+
+
 (function () {
 
 /* Imports */
@@ -8,226 +18,187 @@ var meteorInstall = Package.modules.meteorInstall;
 var Promise = Package.promise.Promise;
 var fetch = Package.fetch.fetch;
 
-var require = meteorInstall({"node_modules":{"meteor":{"dynamic-import":{"server.js":function module(require,exports,module){
+var require = meteorInstall({"node_modules":{"meteor":{"dynamic-import":{"client.js":function module(require,exports,module){
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                                                             //
-// packages/dynamic-import/server.js                                           //
+// packages/dynamic-import/client.js                                           //
 //                                                                             //
 /////////////////////////////////////////////////////////////////////////////////
                                                                                //
-"use strict";
+var Module = module.constructor;
+var cache = require("./cache.js");
+var meteorInstall = require("meteor/modules").meteorInstall;
 
-const assert = require("assert");
-const { readFileSync } = require("fs");
-const {
-  join: pathJoin,
-  normalize: pathNormalize,
-} = require("path");
-const { fetchURL } = require("./common.js");
-const { Meteor } = require("meteor/meteor");
-const hasOwn = Object.prototype.hasOwnProperty;
-
-require("./security.js");
-
-const client = require("./client.js");
-
-Meteor.startup(() => {
-  if (! Package.webapp) {
-    // If the webapp package is not in use, there's no way for the
-    // dynamic-import package to fetch dynamic modules, so we should
-    // abandon the rest of the logic in this module.
-    //
-    // If api.use("webapp") appeared in dynamic-import/package.js, then
-    // Package.webapp would always be defined here, of course, but that
-    // would be a bad idea, because the dynamic-import package should not
-    // single-handedly force a dependency on webapp if the program does
-    // not otherwise need a web server (e.g., when the program is an
-    // isopacket or build plugin instead of a web application).
-    //
-    // Note that the client.js module (imported above) still defines
-    // Module.prototype.dynamicImport, which will work as long as no
-    // modules need to be fetched.
-    return;
-  }
-
-  Object.keys(dynamicImportInfo).forEach(setUpPlatform);
-
-  Package.webapp.WebAppInternals.meteorInternalHandlers.use(
-    fetchURL,
-    middleware
-  );
-});
-
-function setUpPlatform(platform) {
-  const info = dynamicImportInfo[platform];
-
-  if (info.dynamicRoot) {
-    info.dynamicRoot = pathNormalize(info.dynamicRoot);
-  }
-
-  if (platform === "server") {
-    client.setSecretKey(info.key = randomId(40));
-  }
-}
-
-function randomId(n) {
-  let s = "";
-  while (s.length < n) {
-    s += Math.random().toString(36).slice(2);
-  }
-  return s.slice(0, n);
-}
-
-function middleware(request, response) {
-  // Allow dynamic import() requests from any origin.
-  response.setHeader("Access-Control-Allow-Origin", "*");
-
-  if (request.method === "OPTIONS") {
-    const acrh = request.headers["access-control-request-headers"];
-    response.setHeader(
-      "Access-Control-Allow-Headers",
-      typeof acrh === "string" ? acrh : "*"
-    );
-    response.setHeader("Access-Control-Allow-Methods", "POST");
-    response.end();
-
-  } else if (request.method === "POST") {
-    const chunks = [];
-    request.on("data", chunk => chunks.push(chunk));
-    request.on("end", () => {
-      try {
-        const tree = JSON.stringify(readTree(
-          JSON.parse(Buffer.concat(chunks)),
-          getPlatform(request)
-        ), null, 2);
-
-        response.writeHead(200, {
-          "Content-Type": "application/json"
-        });
-
-        response.end(tree);
-
-      } catch (e) {
-        response.writeHead(400, {
-          "Content-Type": "application/json"
-        });
-
-        response.end(JSON.stringify(
-          Meteor.isDevelopment && e.message || "bad request"
-        ));
-      }
-    });
-
-  } else {
-    response.writeHead(405, {
-      "Cache-Control": "no-cache"
-    });
-
-    response.end(`method ${request.method} not allowed`);
-  }
-}
-
-function getPlatform(request) {
-  // If the __dynamicImport request includes a secret key, and it matches
-  // dynamicImportInfo[platform].key, use platform instead of the default
-  // platform, web.browser.
-  const secretKey = request.query.key;
-  if (typeof secretKey === "string") {
-    for (const p of Object.keys(dynamicImportInfo)) {
-      if (secretKey === dynamicImportInfo[p].key) {
-        return p;
-      }
-    }
-  }
-
-  return Package.webapp.WebApp.categorizeRequest(request).arch;
-}
-
-function readTree(tree, platform) {
-  const pathParts = [];
-
-  function walk(node) {
-    if (! node) {
-      return null;
-    }
-
-    if (typeof node !== "object") {
-      return read(pathParts, platform);
-    }
-
-    let empty = true;
-
-    Object.keys(node).forEach(name => {
-      pathParts.push(name);
-      const result = walk(node[name]);
-      if (result === null) {
-        // If the read function returns null, omit this module from the
-        // resulting tree.
-        delete node[name];
-      } else {
-        node[name] = result;
-        empty = false;
-      }
-      assert.strictEqual(pathParts.pop(), name);
-    });
-
-    if (empty) {
-      // If every recursive call to walk(node[name]) returned null,
-      // remove this node from the resulting tree by returning null.
-      return null;
-    }
-
-    return node;
-  }
-
-  return walk(tree);
-}
-
-function read(pathParts, platform) {
-  const { dynamicRoot } = dynamicImportInfo[platform];
-  const absPath = pathNormalize(pathJoin(
-    dynamicRoot,
-    pathJoin(...pathParts).replace(/:/g, "_")
-  ));
-
-  if (! absPath.startsWith(dynamicRoot)) {
-    console.error("bad dynamic import path:", absPath);
-    return null;
-  }
-
-  const cache = getCache(platform);
-  if (hasOwn.call(cache, absPath)) {
-    return cache[absPath];
-  }
-
-  try {
-    return cache[absPath] = readFileSync(absPath, "utf8");
-  } catch (e) {
-    console.error(e.stack || e);
-    return null;
-  }
-}
-
-const cachesByPlatform = Object.create(null);
-function getCache(platform) {
-  return hasOwn.call(cachesByPlatform, platform)
-    ? cachesByPlatform[platform]
-    : cachesByPlatform[platform] = Object.create(null);
-}
-
-const { onMessage } = require("meteor/inter-process-messaging");
-
-onMessage("client-refresh", () => {
-  // The caches for the web.browser[.legacy] platforms need to be
-  // discarded whenever a client-only refresh occurs, so the new client
-  // bundle does not fetch stale module data from dynamic import(). This
-  // message is sent by tools/runners/run-app.js and also consumed by the
-  // autoupdate package.
-  Object.keys(cachesByPlatform).forEach(platform => {
-    delete cachesByPlatform[platform];
+// Call module.dynamicImport(id) to fetch a module and any/all of its
+// dependencies that have not already been fetched, and evaluate them as
+// soon as they arrive. This runtime API makes it very easy to implement
+// ECMAScript dynamic import(...) syntax.
+Module.prototype.dynamicImport = function (id) {
+  var module = this;
+  return module.prefetch(id).then(function () {
+    return getNamespace(module, id);
   });
-});
+};
+
+// Called by Module.prototype.prefetch if there are any missing dynamic
+// modules that need to be fetched.
+meteorInstall.fetch = function (ids) {
+  var tree = Object.create(null);
+  var versions = Object.create(null);
+  var dynamicVersions = require("./dynamic-versions.js");
+  var missing;
+
+  function addSource(id, source) {
+    addToTree(tree, id, makeModuleFunction(id, source, ids[id].options));
+  }
+
+  function addMissing(id) {
+    addToTree(missing = missing || Object.create(null), id, 1);
+  }
+
+  Object.keys(ids).forEach(function (id) {
+    var version = dynamicVersions.get(id);
+    if (version) {
+      versions[id] = version;
+    } else {
+      addMissing(id);
+    }
+  });
+
+  return cache.checkMany(versions).then(function (sources) {
+    Object.keys(sources).forEach(function (id) {
+      var source = sources[id];
+      if (source) {
+        addSource(id, source);
+      } else {
+        addMissing(id);
+      }
+    });
+
+    return missing && fetchMissing(missing).then(function (results) {
+      var versionsAndSourcesById = Object.create(null);
+      var flatResults = flattenModuleTree(results);
+
+      Object.keys(flatResults).forEach(function (id) {
+        var source = flatResults[id];
+        addSource(id, source);
+
+        var version = dynamicVersions.get(id);
+        if (version) {
+          versionsAndSourcesById[id] = {
+            version: version,
+            source: source
+          };
+        }
+      });
+
+      cache.setMany(versionsAndSourcesById);
+    });
+
+  }).then(function () {
+    return tree;
+  });
+};
+
+function flattenModuleTree(tree) {
+  var parts = [""];
+  var result = Object.create(null);
+
+  function walk(t) {
+    if (t && typeof t === "object") {
+      Object.keys(t).forEach(function (key) {
+        parts.push(key);
+        walk(t[key]);
+        parts.pop();
+      });
+    } else if (typeof t === "string") {
+      result[parts.join("/")] = t;
+    }
+  }
+
+  walk(tree);
+
+  return result;
+}
+
+function makeModuleFunction(id, source, options) {
+  // By calling (options && options.eval || eval) in a wrapper function,
+  // we delay the cost of parsing and evaluating the module code until the
+  // module is first imported.
+  return function () {
+    // If an options.eval function was provided in the second argument to
+    // meteorInstall when this bundle was first installed, use that
+    // function to parse and evaluate the dynamic module code in the scope
+    // of the package. Otherwise fall back to indirect (global) eval.
+    return (options && options.eval || eval)(
+      // Wrap the function(require,exports,module){...} expression in
+      // parentheses to force it to be parsed as an expression.
+      "(" + source + ")\n//# sourceURL=" + id
+    ).apply(this, arguments);
+  };
+}
+
+var secretKey = null;
+exports.setSecretKey = function (key) {
+  secretKey = key;
+};
+
+var fetchURL = require("./common.js").fetchURL;
+
+function fetchMissing(missingTree) {
+  // If the hostname of the URL returned by Meteor.absoluteUrl differs
+  // from location.host, then we'll be making a cross-origin request here,
+  // but that's fine because the dynamic-import server sets appropriate
+  // CORS headers to enable fetching dynamic modules from any
+  // origin. Browsers that check CORS do so by sending an additional
+  // preflight OPTIONS request, which may add latency to the first dynamic
+  // import() request, so it's a good idea for ROOT_URL to match
+  // location.host if possible, though not strictly necessary.
+  var url = Meteor.absoluteUrl(fetchURL);
+
+  if (secretKey) {
+    url += "key=" + secretKey;
+  }
+
+  return fetch(url, {
+    method: "POST",
+    body: JSON.stringify(missingTree)
+  }).then(function (res) {
+    if (! res.ok) throw res;
+    return res.json();
+  });
+}
+
+function addToTree(tree, id, value) {
+  var parts = id.split("/");
+  var lastIndex = parts.length - 1;
+  parts.forEach(function (part, i) {
+    if (part) {
+      tree = tree[part] = tree[part] ||
+        (i < lastIndex ? Object.create(null) : value);
+    }
+  });
+}
+
+function getNamespace(module, id) {
+  var namespace;
+
+  module.link(id, {
+    "*": function (ns) {
+      namespace = ns;
+    }
+  });
+
+  // This helps with Babel interop, since we're not just returning the
+  // module.exports object.
+  Object.defineProperty(namespace, "__esModule", {
+    value: true,
+    enumerable: false
+  });
+
+  return namespace;
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -430,190 +401,6 @@ function flushSetMany() {
 
 /////////////////////////////////////////////////////////////////////////////////
 
-},"client.js":function module(require,exports,module){
-
-/////////////////////////////////////////////////////////////////////////////////
-//                                                                             //
-// packages/dynamic-import/client.js                                           //
-//                                                                             //
-/////////////////////////////////////////////////////////////////////////////////
-                                                                               //
-var Module = module.constructor;
-var cache = require("./cache.js");
-var meteorInstall = require("meteor/modules").meteorInstall;
-
-// Call module.dynamicImport(id) to fetch a module and any/all of its
-// dependencies that have not already been fetched, and evaluate them as
-// soon as they arrive. This runtime API makes it very easy to implement
-// ECMAScript dynamic import(...) syntax.
-Module.prototype.dynamicImport = function (id) {
-  var module = this;
-  return module.prefetch(id).then(function () {
-    return getNamespace(module, id);
-  });
-};
-
-// Called by Module.prototype.prefetch if there are any missing dynamic
-// modules that need to be fetched.
-meteorInstall.fetch = function (ids) {
-  var tree = Object.create(null);
-  var versions = Object.create(null);
-  var dynamicVersions = require("./dynamic-versions.js");
-  var missing;
-
-  function addSource(id, source) {
-    addToTree(tree, id, makeModuleFunction(id, source, ids[id].options));
-  }
-
-  function addMissing(id) {
-    addToTree(missing = missing || Object.create(null), id, 1);
-  }
-
-  Object.keys(ids).forEach(function (id) {
-    var version = dynamicVersions.get(id);
-    if (version) {
-      versions[id] = version;
-    } else {
-      addMissing(id);
-    }
-  });
-
-  return cache.checkMany(versions).then(function (sources) {
-    Object.keys(sources).forEach(function (id) {
-      var source = sources[id];
-      if (source) {
-        addSource(id, source);
-      } else {
-        addMissing(id);
-      }
-    });
-
-    return missing && fetchMissing(missing).then(function (results) {
-      var versionsAndSourcesById = Object.create(null);
-      var flatResults = flattenModuleTree(results);
-
-      Object.keys(flatResults).forEach(function (id) {
-        var source = flatResults[id];
-        addSource(id, source);
-
-        var version = dynamicVersions.get(id);
-        if (version) {
-          versionsAndSourcesById[id] = {
-            version: version,
-            source: source
-          };
-        }
-      });
-
-      cache.setMany(versionsAndSourcesById);
-    });
-
-  }).then(function () {
-    return tree;
-  });
-};
-
-function flattenModuleTree(tree) {
-  var parts = [""];
-  var result = Object.create(null);
-
-  function walk(t) {
-    if (t && typeof t === "object") {
-      Object.keys(t).forEach(function (key) {
-        parts.push(key);
-        walk(t[key]);
-        parts.pop();
-      });
-    } else if (typeof t === "string") {
-      result[parts.join("/")] = t;
-    }
-  }
-
-  walk(tree);
-
-  return result;
-}
-
-function makeModuleFunction(id, source, options) {
-  // By calling (options && options.eval || eval) in a wrapper function,
-  // we delay the cost of parsing and evaluating the module code until the
-  // module is first imported.
-  return function () {
-    // If an options.eval function was provided in the second argument to
-    // meteorInstall when this bundle was first installed, use that
-    // function to parse and evaluate the dynamic module code in the scope
-    // of the package. Otherwise fall back to indirect (global) eval.
-    return (options && options.eval || eval)(
-      // Wrap the function(require,exports,module){...} expression in
-      // parentheses to force it to be parsed as an expression.
-      "(" + source + ")\n//# sourceURL=" + id
-    ).apply(this, arguments);
-  };
-}
-
-var secretKey = null;
-exports.setSecretKey = function (key) {
-  secretKey = key;
-};
-
-var fetchURL = require("./common.js").fetchURL;
-
-function fetchMissing(missingTree) {
-  // If the hostname of the URL returned by Meteor.absoluteUrl differs
-  // from location.host, then we'll be making a cross-origin request here,
-  // but that's fine because the dynamic-import server sets appropriate
-  // CORS headers to enable fetching dynamic modules from any
-  // origin. Browsers that check CORS do so by sending an additional
-  // preflight OPTIONS request, which may add latency to the first dynamic
-  // import() request, so it's a good idea for ROOT_URL to match
-  // location.host if possible, though not strictly necessary.
-  var url = Meteor.absoluteUrl(fetchURL);
-
-  if (secretKey) {
-    url += "key=" + secretKey;
-  }
-
-  return fetch(url, {
-    method: "POST",
-    body: JSON.stringify(missingTree)
-  }).then(function (res) {
-    if (! res.ok) throw res;
-    return res.json();
-  });
-}
-
-function addToTree(tree, id, value) {
-  var parts = id.split("/");
-  var lastIndex = parts.length - 1;
-  parts.forEach(function (part, i) {
-    if (part) {
-      tree = tree[part] = tree[part] ||
-        (i < lastIndex ? Object.create(null) : value);
-    }
-  });
-}
-
-function getNamespace(module, id) {
-  var namespace;
-
-  module.link(id, {
-    "*": function (ns) {
-      namespace = ns;
-    }
-  });
-
-  // This helps with Babel interop, since we're not just returning the
-  // module.exports object.
-  Object.defineProperty(namespace, "__esModule", {
-    value: true,
-    enumerable: false
-  });
-
-  return namespace;
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-
 },"common.js":function module(require,exports){
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -725,39 +512,6 @@ if (global.addEventListener) {
 
 /////////////////////////////////////////////////////////////////////////////////
 
-},"security.js":function module(require,exports,module){
-
-/////////////////////////////////////////////////////////////////////////////////
-//                                                                             //
-// packages/dynamic-import/security.js                                         //
-//                                                                             //
-/////////////////////////////////////////////////////////////////////////////////
-                                                                               //
-Meteor.startup(function () {
-  const bpc = Package["browser-policy-content"];
-  const BP = bpc && bpc.BrowserPolicy;
-  const BPc = BP && BP.content;
-  if (BPc) {
-    // The ability to evaluate new code is essential for loading dynamic
-    // modules. Without eval, we would be forced to load modules using
-    // <script src=...> tags, and then there would be no way to save those
-    // modules to a local cache (or load them from the cache) without the
-    // unique response caching abilities of service workers, which are not
-    // available in all browsers, and cannot be polyfilled in a way that
-    // satisfies Content Security Policy eval restrictions. Moreover, eval
-    // allows us to evaluate dynamic module code in the original package
-    // scope, which would never be possible using <script> tags. If you're
-    // deploying an app in an environment that demands a Content Security
-    // Policy that forbids eval, your only option is to bundle all dynamic
-    // modules in the initial bundle. Fortunately, that works perfectly
-    // well; you just won't get the performance benefits of dynamic module
-    // fetching.
-    BPc.allowEval();
-  }
-});
-
-/////////////////////////////////////////////////////////////////////////////////
-
 }}}}},{
   "extensions": [
     ".js",
@@ -765,7 +519,7 @@ Meteor.startup(function () {
   ]
 });
 
-var exports = require("/node_modules/meteor/dynamic-import/server.js");
+var exports = require("/node_modules/meteor/dynamic-import/client.js");
 
 /* Exports */
 Package._define("dynamic-import", exports);
