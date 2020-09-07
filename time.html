@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>CLOCK</title>
+	<style>
+		body {
+			text-align: center;
+			left: 50%;
+			top: 50%;
+			font-family: 'IBM Plex Mono' , 'Courier New' , 'Courier' , 'monospace' , 'Montserrat', 'Share Tech Mono';
+			font-size: 80px;
+			color: rgba(88, 88, 88, 0.5);
+			text-shadow: 0 0 20px rgba(66, 66, 66, 1), 0 0 20px rgba(66, 66, 66, 0);
+		}
+		#ymd {
+			font-size: 24px;
+			border: solid;
+			border-style: double;
+			width: -webkit-fit-content;
+			text-align: center;
+			margin: 0 auto;
+			padding: 5px 10px;
+		}
+	</style>
+</head>
+<body>
+	<div id="clock">
+		<div class="mechanics">
+			<div id="ymd"></div>
+			<span id="hour"></span>
+			<span id='timeSplit' style='visibility: visible;'>:</span>
+			<span id="min"></span>
+			<span id='timeSplit' style='visibility: visible;'>:</span>
+			<span id="sec"></span>
+		</div>
+	</div>
+</body>
+<script>
+	let now = () => {
+		let date = new Date();
+		let prem = '' + (date.getMonth() + 1),
+			pred = '' + date.getDate();
+		let m = prem.length === '2' ? prem : '0' + prem,
+			d = pred.length === '2' ? pred : '0' + pred,
+			y = date.getFullYear();
+		let prewd = new Array(7);
+		prewd[0] = "Sunday | 星期日";
+		prewd[1] = "Monday | 星期一";
+		prewd[2] = "Tuesday | 星期二";
+		prewd[3] = "Wednesday | 星期三";
+		prewd[4] = "Thursday | 星期四";
+		prewd[5] = "Friday | 星期五";
+		prewd[6] = "Saturday | 星期六";
+		let wd = prewd[date.getUTCDay()];
+		let time = new Intl.DateTimeFormat("en-GB", {
+			hour: "numeric",
+			minute: "numeric",
+			second: "numeric"
+		}).format(date).split(':');
+		return {
+			hour: time[0],
+			min: time[1],
+			sec: time[2],
+			ymd: [y, m, d].join(' - ') + '<br>' + '<span style="font-size:0.7em;">' + wd + '</span>'
+		};
+	};
+	let drawTime = (el, tl) => {
+		document.querySelector(el).innerHTML = tl;
+	};
+	let timeSplit = (el) => {
+		let t1 = document.querySelectorAll('#timeSplit')[0];
+		let t2 = document.querySelectorAll('#timeSplit')[1];
+		t1.getAttribute('style') === 'visibility: visible;' ? t1.setAttribute('style', 'visibility: hidden;') : t1.setAttribute('style', 'visibility: visible;');
+		t2.getAttribute('style') === 'visibility: visible;' ? t2.setAttribute('style', 'visibility: hidden;') : t2.setAttribute('style', 'visibility: visible;');
+	};
+	let timer = () => {
+		['#hour', '#min', '#sec', '#ymd', '#timeSplit'].forEach(function(e) {
+			e === '#hour' ? drawTime('#hour', now().hour) : (
+				e === '#min' ? drawTime('#min', now().min) : (
+					e === '#sec' ? drawTime('#sec', now().sec) : (
+						e === '#ymd' ? drawTime('#ymd', now().ymd) : timeSplit('#timeSplit')
+					)
+				)
+			)
+		})
+	}
+	setInterval(timer, 1000);
+</script>
+</html>
