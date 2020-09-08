@@ -12,8 +12,9 @@
 			text-shadow: 0 0 20px rgba(66, 66, 66, 1), 0 0 20px rgba(66, 66, 66, 0);
 		}
 		#clock {
-			margin: 40vh auto;
-			text-align: center;
+			margin: 0 12vw;
+			position: fixed;
+			bottom: 50vh;
 		}
 		#ymd {
 			font-size: 5vw;
@@ -27,7 +28,9 @@
 /* 		@media screen  */
 		@media (pointer:none), (pointer:coarse)  and (orientation: landscape){
 			#clock {
-			margin: 20vh auto;
+			margin: 0 12vw;
+			position: fixed;
+			bottom: calc(100vh - 4em);
 			}
 		}
 	</style>
