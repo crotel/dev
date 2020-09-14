@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+	<title>CJT</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="CJT.">
+	<meta name="author" content="crotel">
+	<script>
+		let sign = window.prompt('Are you feeling lucky');
+		fetch('https://cai.clanpark.com/api',{
+			headers: {
+				"X-Custom-PSK": sign,
+			},
+		}).then(r=>{
+  	//return document.write((new window.DOMParser()).parseFromString(r.text(), 'text/html'));
+  	return r.text();
+  	//return r.text();
+  }).then(r=>{
+  	document.write(r);
+  })
+</script>
+</head>	
+<body>
+</body>
+</html>
