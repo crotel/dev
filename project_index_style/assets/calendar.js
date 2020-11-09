@@ -136,7 +136,9 @@ if (!cal.sMon && endDay != 6) {
     tForm += "<input type='button' value='Close' onclick='cal.close()'/>";
     tForm += "<input type='button' value='Delete' onclick='cal.del()'/>";
     tForm += "<input type='submit' value='Save'/>";
-    tForm += "<input type='button' value='Today?' onclick='lunar()'/>";
+//     tForm += "<input type='button' value='Today?' onclick='lunar()'/>";
+    tForm += "<input type='button' value='Today?' />";
+
 
     // (C3) ATTACH EVENT FORM
     var eForm = document.createElement("form");
@@ -204,6 +206,7 @@ window.addEventListener("load", function () {
 let control = () => {  
   document.getElementById("cal-yr").addEventListener('change', function(){cal.list();lunar()}); // cal.list);
   document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});  // cal.list);
+  document.querySelector('input[value="Today?"]').addEventListener('click', function(){cal.list();lunar()});
 //   document.getElementById("calendar").addEventListener('dbclick', function(){cal.list();lunar()});
 }
 setTimeout(control,50);
