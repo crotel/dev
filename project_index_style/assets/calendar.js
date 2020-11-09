@@ -130,11 +130,13 @@ if (!cal.sMon && endDay != 6) {
 
     // (C2) DRAW EVENT FORM
     var tForm = "<h1>" + (cal.data[cal.sDay] ? "EDIT" : "ADD") + " NOTE</h1>";
-    tForm += "<div id='evt-date'>" + cal.sDay + " " + cal.mName[cal.sMth] + " " + cal.sYear + "</div>";
+//     tForm += "<div id='evt-date'>" + cal.sDay + " " + cal.mName[cal.sMth] + " " + cal.sYear + "</div>"; 
+    tForm += "<div id='evt-date'>" + cal.sDay + " " + (cal.sMth + 1) + " " + cal.sYear + "</div>";
     tForm += "<textarea id='evt-details' required>" + (cal.data[cal.sDay] ? cal.data[cal.sDay] : "") + "</textarea>";
     tForm += "<input type='button' value='Close' onclick='cal.close()'/>";
     tForm += "<input type='button' value='Delete' onclick='cal.del()'/>";
     tForm += "<input type='submit' value='Save'/>";
+    tForm += "<input type='button' value='Today?' onclick='lunar()'/>";
 
     // (C3) ATTACH EVENT FORM
     var eForm = document.createElement("form");
@@ -202,7 +204,7 @@ window.addEventListener("load", function () {
 let control = () => {  
   document.getElementById("cal-yr").addEventListener('change', function(){cal.list();lunar()}); // cal.list);
   document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});  // cal.list);
-  document.getElementById("calendar").addEventListener('dbclick', function(){cal.list();lunar()});
+//   document.getElementById("calendar").addEventListener('dbclick', function(){cal.list();lunar()});
 }
 setTimeout(control,50);
   cal.list();
