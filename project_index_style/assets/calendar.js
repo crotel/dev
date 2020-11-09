@@ -202,7 +202,7 @@ window.addEventListener("load", function () {
 let control = () => {  
   document.getElementById("cal-yr").addEventListener('change', function(){cal.list();lunar()}); // cal.list);
   document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});  // cal.list);
-  document.getElementById("calendar").addEventListener('click', function(){cal.list();lunar()});
+  document.getElementById("calendar").addEventListener('dbclick', function(){cal.list();lunar()});
 }
 setTimeout(control,50);
   cal.list();
@@ -322,7 +322,7 @@ setTimeout(control,50);
   var compute = function(){
     try{
       var year = cal.sYear === 0 ? time().year.toString():cal.sYear.toString();
-      var month = cal.sMth === 0 ? time().month.toString():cal.sMth.toString();
+      var month = cal.sMth === 0 ? time().month.toString():(cal.sMth + 1).toString();
       var day = cal.sDay === 0 ? time().day.toString():cal.sDay.toString();
 //       var year = time().year.toString();
 //       var month = time().month.toString();
