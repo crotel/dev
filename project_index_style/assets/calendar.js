@@ -107,7 +107,7 @@ if (!cal.sMon && endDay != 6) {
     cal.close();
     setTimeout(function(){
       // document.getElementById("cal-dth").innerText = new Date().getDate()
-        let tmN = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"], // Month Names
+        //let tmN = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"], // Month Names
         td = new Date().getDate().toString(),
         ty = new Date().getFullYear(),
         tm = new Date().getMonth() + 1;
@@ -119,7 +119,7 @@ if (!cal.sMon && endDay != 6) {
           }
         });
         document.querySelectorAll('.head > td')[0].innerHTML += '<br>周日';
-        document.getElementById("cal-bg").innerHTML = tmN[tm - 1];
+        document.getElementById("cal-bg").innerHTML = tm.toString().length === 2 ? tm.toString() : ['0',tm.toString()].join('');//tmN[tm - 1];
       },0);
   },
 
@@ -200,8 +200,9 @@ window.addEventListener("load", function () {
   // (G4) START - DRAW CALENDAR
   // document.getElementById("cal-set").addEventListener("click", cal.list);
   
-  document.getElementById("cal-yr").addEventListener('change', cal.list);
-  document.getElementById("cal-mth").addEventListener('change', cal.list);
+  document.getElementById("cal-yr").addEventListener('change', function(){cal.list();lunar()}); // cal.list);
+  document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});  // cal.list);
+  document.getElementById("calendar").addEventListener('click', function(){cal.list();lunar()});
   cal.list();
   // custom time
   let time = () => {
@@ -318,9 +319,12 @@ window.addEventListener("load", function () {
 
   var compute = function(){
     try{
-      var year = time().year.toString();
-      var month = time().month.toString();
-      var day = time().day.toString();
+      var year = cal.sYear === 0 ? time().year.toString():cal.sYear.toString();
+      var month = cal.sMth === 0 ? time().month.toString():cal.sMth.toString();
+      var day = cal.sDay === 0 ? time().day.toString():cal.sDay.toString();
+//       var year = time().year.toString();
+//       var month = time().month.toString();
+//       var day = time().day.toString();
       if(year.length!=4){
         return;
       }
