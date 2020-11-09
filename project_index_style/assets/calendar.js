@@ -6,7 +6,7 @@ mathHeight = ()=>{
             document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
             setTimeout(()=>{
                 let parentHeight2 = document.querySelector('#cal-time').clientHeight;
-                    document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight}px + ${parentHeight2}px);`);
+                    document.querySelector('.huangli').setAttribute('style',`top: calc((${parentHeight}px + ${parentHeight2}px) * 1.25);`);
             },0)
         },0)
 },
