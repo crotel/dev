@@ -1,7 +1,15 @@
 let now = new Date(),
-parentHeight = document.querySelector('#cal-container').clientHeight,
-parentWidth = document.querySelector('#cal-container').clientWidth,
-parentHeight2 = document.querySelector('#cal-time').clientHeight,
+mathHeight = ()=>{
+    let parentHeight = document.querySelector('#cal-container').clientHeight,
+    parentWidth = document.querySelector('#cal-container').clientWidth;
+        setTimeout(()=>{
+            document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
+            setTimeout(()=>{
+                let parentHeight2 = document.querySelector('#cal-time').clientHeight;
+                    document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight}px + ${parentHeight2}px);`);
+            },0)
+        },0)
+},
 time = () => {
     // let date = new Date();
     let y = now.getFullYear();
@@ -157,8 +165,7 @@ lunar = () => {
 
   compute();
   
-  document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight}px + ${parentHeight2}px);`);
-
+  
   setTimeout(()=>{
     document.querySelectorAll('tr').forEach((e)=>{
       e.querySelectorAll('td')[0].setAttribute('style','width: fit-content!important;white-space: nowrap!important;padding-right: 1em!important;')
@@ -404,9 +411,10 @@ setTimeout(control,50);
   }
 //   let parentHeight = document.querySelector('#cal-container').clientHeight;
 //   let parentWidth = document.querySelector('#cal-container').clientWidth;
-  document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
   setInterval(timer, 1000); 
   setTimeout(lunar,0);
+  setTimeout(mathHeight,30);
+    
 });
 
 window.addEventListener("resize", function () {
