@@ -1,5 +1,25 @@
-let lunar = () => {
-    var today = Solar.fromDate(now);
+let now = new Date(),
+time = () => {
+    // let date = new Date();
+    let y = now.getFullYear();
+    let m = now.getMonth() + 1;
+    let d = now.getDate();
+    let getTime = new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric"
+    }).format(now).split(':');
+    return {
+      h: getTime[0],
+      m: getTime[1],
+      s: getTime[2],
+      year : y,
+      month : m,
+      day: d
+    };
+  },
+lunar = () => {
+    var today = Solar.fromDate(new Date());
 
     var renderTime = function(year,month,day){
       var l = [];
@@ -64,8 +84,8 @@ let lunar = () => {
       s += '</tr>';
 
       s += '</tbody></table>';
-    //$('#times').html(s);
-    document.querySelector('#times').innerHTML = s;
+    $('#times').html(s);
+    //document.querySelector('#times').innerHTML = s;
   };
 
   var compute = function(){
@@ -321,7 +341,7 @@ if (!cal.sMon && endDay != 6) {
 // (G) INIT - DRAW MONTH & YEAR SELECTOR
 window.addEventListener("load", function () {
   // (G1) DATE NOW
-  var now = new Date(),
+  
   nowMth = now.getMonth(),
   nowYear = parseInt(now.getFullYear());
 
@@ -359,25 +379,7 @@ let control = () => {
 setTimeout(control,50);
   cal.list();
   // custom time
-  let time = () => {
-    // let date = new Date();
-    let y = now.getFullYear();
-    let m = now.getMonth() + 1;
-    let d = now.getDate();
-    let getTime = new Intl.DateTimeFormat("en-GB", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric"
-    }).format(now).split(':');
-    return {
-      h: getTime[0],
-      m: getTime[1],
-      s: getTime[2],
-      year : y,
-      month : m,
-      day: d
-    };
-  };
+  
   let drawTime = (el, tl) => {
     document.querySelector(el).innerHTML = tl;
   };
