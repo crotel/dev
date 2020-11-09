@@ -198,11 +198,13 @@ window.addEventListener("load", function () {
   }
 
   // (G4) START - DRAW CALENDAR
-  // document.getElementById("cal-set").addEventListener("click", cal.list);
-  
+//   // document.getElementById("cal-set").addEventListener("click", cal.list);
+let control = () => {  
   document.getElementById("cal-yr").addEventListener('change', function(){cal.list();lunar()}); // cal.list);
   document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});  // cal.list);
   document.getElementById("calendar").addEventListener('click', function(){cal.list();lunar()});
+}
+setTimeout(control,50);
   cal.list();
   // custom time
   let time = () => {
