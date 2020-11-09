@@ -420,11 +420,12 @@ setTimeout(control,50);
 window.addEventListener("resize", function () {
 //  let parentHeight = document.querySelector('#cal-container').clientHeight;
 //  let parentWidth = document.querySelector('#cal-container').clientWidth;
- document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
- setTimeout(()=>{
-//   let parentHeight2 = document.querySelector('#cal-container').clientHeight;
-  document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight}px + ${parentHeight2}px);`);
-},0);
+//  document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
+//  setTimeout(()=>{
+// //   let parentHeight2 = document.querySelector('#cal-container').clientHeight;
+//   document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight}px + ${parentHeight2}px);`);
+// },0);
+    setTimeout(mathHeight,30);
  
 
 },false)
