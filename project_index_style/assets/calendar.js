@@ -12,14 +12,14 @@ mathHeight = ()=>{
 },
 time = () => {
     // let date = new Date();
-    let y = now.getFullYear();
-    let m = now.getMonth() + 1;
-    let d = now.getDate();
+    let y = new Date().getFullYear();
+    let m = new Date().getMonth() + 1;
+    let d = new Date().getDate();
     let getTime = new Intl.DateTimeFormat("en-GB", {
       hour: "numeric",
       minute: "numeric",
       second: "numeric"
-    }).format(now).split(':');
+    }).format(new Date()).split(':');
     return {
       h: getTime[0],
       m: getTime[1],
@@ -31,7 +31,6 @@ time = () => {
   },
 lunar = () => {
     var today = Solar.fromDate(new Date());
-
     var renderTime = function(year,month,day){
       var l = [];
       l.push(Solar.fromYmdHms(year,month,day,0,0,0).getLunar());
@@ -104,9 +103,6 @@ lunar = () => {
       var year = cal.sYear === 0 ? time().year.toString():cal.sYear.toString();
       var month = cal.sMth === 0 ? time().month.toString():(cal.sMth + 1).toString();
       var day = cal.sDay === 0 ? time().day.toString():cal.sDay.toString();
-//       var year = time().year.toString();
-//       var month = time().month.toString();
-//       var day = time().day.toString();
       if(year.length!=4){
         return;
       }
