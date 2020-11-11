@@ -7,7 +7,8 @@ td.today {
   background-position: center;
 }
 div.huangli {
-  position: absolute;
+  position: static;
+  overflow-y: scroll;
 }
 .huangli table {
   margin: auto;
@@ -17,40 +18,50 @@ div.huangli {
 }
 #cal-bg{
   color: #ddd;
-  position: absolute;
+  position: fixed;
   text-align: center;
   width: 100%;
-  top: 0.5em;
+  top: 8%;
   font-weight: bold;
-  font-size: 13em;
   z-index: -99;
 }
 #cal-time{
   color: #ddd;
-  position: absolute;
+  position: static;
   text-align: center;
   width: 100%;
   font-weight: bold;
   z-index: -99;
 }
+#cal-time span:not(:last-child)::after {
+  content: ' :';
+}
+/*#cal-time #timeSplit {
+  font-size: inherit!important;
+}*/
 .note::after{
   content: ' *';
   color: red;
   position: absolute;
-  margin: 0.25em;
+  /*margin: 0.25em;*/
 }
 
 /* [PERIOD SELECTOR] */
-#cal-date { display: flex; }
+#cal-date {
+  margin: 1em auto;
+  width: fit-content;
+  display: flex; 
+}
 #cal-mth, #cal-yr, #cal-set {
   box-sizing: border-box;
   padding: 10px 20px;
   font-size: 1em;
   border: 0;
+  border-radius: 5px;
   color: #fff;
 }
 #cal-mth, #cal-yr { background: #5d7d9e; }
-#cal-set { background: #4e83d9; }
+/*#cal-set { background: #4e83d9; }*/
 /* [CALENDAR] */
 #calendar {
   width: 100%;
@@ -132,7 +143,10 @@ div.huangli {
 * {
   font-family: 'Share Tech Mono', monospace;
 }
-html {
+html{
   max-width: 100%;
   /*overflow: hidden;*/
+}
+body {
+  content: '111';
 }
