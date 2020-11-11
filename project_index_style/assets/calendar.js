@@ -1,14 +1,36 @@
 let now = new Date(),
-mathHeight = ()=>{
-    let parentHeight = document.querySelector('#cal-container').clientHeight,
-    parentWidth = document.querySelector('#cal-container').clientWidth;
-        setTimeout(()=>{
-            document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
-            setTimeout(()=>{
-                let parentHeight2 = document.querySelector('#cal-time').clientHeight;
-                    document.querySelector('.huangli').setAttribute('style',`top: calc((${parentHeight}px + ${parentHeight2}px) * 1.25);`);
-            },0)
-        },0)
+mathDS = ()=>{
+  // cal height & width as var
+  let parentHeight = document.querySelector('#cal-container').clientHeight,
+  parentWidth = document.querySelector('#cal-container').clientWidth;
+
+  // cal font-size
+  document.querySelector('#cal-container').querySelector('#calendar').setAttribute('style',`font-size: calc(${parentWidth}px / 20)!important`);
+  
+  
+  setTimeout(()=>{
+    // time height
+    document.querySelector('#cal-time').setAttribute('style',`font-size: calc(${parentWidth}px / 8)`); // margin-top: calc(${parentHeight}px * 1.25); 
+    document.querySelector('#cal-bg').setAttribute('style',`top: calc(${parentHeight}px /3);font-size: calc(${parentWidth}px * 0.6)`);
+
+    setTimeout(()=>{
+      // time height as var
+      let parentHeight2 = document.querySelector('#cal-time').clientHeight;
+      let step = window.devicePixelRatio;
+      // let attr = document.body.style.getAttribute('style');
+      // console.log(attr)
+      // document.querySelector('.huangli').setAttribute('style',`top: calc((${parentHeight}px + ${parentHeight2}px) * 1.25);`);
+      // huangli
+      document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight + parentHeight2}px * 1.5);`);
+      document.querySelector('.huangli').querySelectorAll('tr').forEach((e)=>{
+    e.querySelectorAll('td')[0].setAttribute('style','width: fit-content!important;white-space: nowrap!important;padding-right: 1em!important;')
+  })
+      document.querySelector('#times').querySelector('tbody').setAttribute('style',`font-size: calc(${parentWidth}px /70)`)
+      // document.body.style.setAttribute('style',attr + `;font-size: 1em * ${step}`)
+      // document.querySelector('#timeSplit').setAttribute('style',`font-size: 10em!important`);
+
+    },0)
+  },0)
 },
 time = () => {
     // let date = new Date();
@@ -29,8 +51,9 @@ time = () => {
       day: d
     };
   },
-lunar = () => {
+  lunar = () => {
     var today = Solar.fromDate(new Date());
+
     var renderTime = function(year,month,day){
       var l = [];
       l.push(Solar.fromYmdHms(year,month,day,0,0,0).getLunar());
@@ -94,79 +117,82 @@ lunar = () => {
       s += '</tr>';
 
       s += '</tbody></table>';
-    $('#times').html(s);
+      $('#times').html(s);
     //document.querySelector('#times').innerHTML = s;
   };
 
   var compute = function(){
     try{
-      var year = cal.sYear === 0 ? time().year.toString():cal.sYear.toString();
-      var month = cal.sMth === 0 ? time().month.toString():(cal.sMth + 1).toString();
-      var day = cal.sDay === 0 ? time().day.toString():cal.sDay.toString();
-      if(year.length!=4){
-        return;
-      }
-      if(year<1901||year>2099){
-        return;
-      }
-      if(month<1||month>12){
-        return;
-      }
-      if(day<1||day>31){
-        return;
-      }
-      year = parseInt(year,10);
-      month = parseInt(month,10);
-      day = parseInt(day,10);
-      var s = Solar.fromYmd(year,month,day);
-      var d = s.getLunar();
-      $('#yuexiang').html(d.getYueXiang());
-      $('#a').html(d.getYearInGanZhi()+'年 <br>生肖：属'+d.getYearShengXiao()+' <br>纳音五行：'+d.getYearNaYin());
-      $('#a1').html(d.getMonthInGanZhi()+'月 <br>生肖：属'+d.getMonthShengXiao()+' <br>纳音五行：'+d.getMonthNaYin());
-      $('#a2').html(d.getDayInGanZhi()+'日 <br>生肖：属'+d.getDayShengXiao()+' <br>纳音五行：'+d.getDayNaYin());
-      $('#a3').html(s.getJulianDay());
-      $('#b').html(d.getYearInChinese()+'年 '+d.getMonthInChinese()+'月 '+d.getDayInChinese()+' (阴历)');
-      $('#c').html(s.getYear()+'年 '+s.getMonth()+'月 '+s.getDay()+'日 星期'+s.getWeekInChinese()+' '+s.getXingZuo()+'座 (阳历)');
-      $('#m').html(d.getSeason());
-      $('#d').html(d.getPengZuGan()+' '+d.getPengZuZhi());
-      $('#yj').html('<span style="color:green">宜</span>：'+d.getDayYi().join(' ')+'<br><span style="color:red">忌</span>：'+d.getDayJi().join(' '));
-      $('#e').html(d.getDayShengXiao()+'日 冲'+d.getChongDesc());
-      $('#js').html(d.getDayJiShen().join(' '));
-      $('#xs').html(d.getDayXiongSha().join(' '));
-      $('#f').html(d.getSha());
-      $('#g').html(d.getGong()+'方'+d.getXiu()+d.getZheng()+d.getAnimal()+' ('+d.getXiuLuck()+')');
-      $('#g1').html(d.getXiuSong());
-      $('#h').html('阳贵神：'+d.getPositionYangGuiDesc()+' <br>阴贵神：'+d.getPositionYinGuiDesc());
-      $('#i').html(d.getPositionXiDesc());
-      $('#i1').html(d.getPositionFuDesc());
-      $('#i2').html(d.getPositionCaiDesc());
-      $('#i3').html(d.getMonthPositionTai());
-      $('#i4').html(d.getDayPositionTai());
-      $('#x').html(d.getFestivals().join('、')+' '+s.getFestivals().join('、'));
-      $('#y').html(d.getOtherFestivals().join('、')+' '+s.getOtherFestivals().join('、'));
-      $('#j').html(d.getZhiXing());
-      $('#k').html(d.getDayTianShen()+'('+d.getDayTianShenType()+') '+ d.getDayTianShenLuck());
-      var p = d.getPrevJieQi(),n = d.getNextJieQi();
-      $('#p').html(p.getName()+' '+p.getSolar().toYmdHms()+' 星期'+p.getSolar().getWeekInChinese());
-      $('#n').html(n.getName()+' '+n.getSolar().toYmdHms()+' 星期'+n.getSolar().getWeekInChinese());
-      var jiuxing = d.getDayNineStar();
-      $('#jiuxing').html(jiuxing.getNumber()+jiuxing.getColor()+' - '+jiuxing.getNameInTaiYi()+'星('+jiuxing.getWuXing()+') - '+jiuxing.getTypeInTaiYi());
-      $('#jiuxing-song').html(jiuxing.getSongInTaiYi());
-      
-      renderTime(year,month,day);
-    }catch(e){
-      console.log(e);
-    }
-  };
+      var year = cal.sYear === null ? time().year.toString():cal.sYear.toString();
+      var month = cal.sMth === null ? time().month.toString():(cal.sMth + 1).toString();
+      var day = cal.sDay === null ? time().day.toString():cal.sDay.toString();
+//       var year = time().year.toString();
+//       var month = time().month.toString();
+//       var day = time().day.toString();
+if(year.length!=4){
+  return;
+}
+if(year<1901||year>2099){
+  return;
+}
+if(month<1||month>12){
+  return;
+}
+if(day<1||day>31){
+  return;
+}
+year = parseInt(year,10);
+month = parseInt(month,10);
+day = parseInt(day,10);
+var s = Solar.fromYmd(year,month,day);
+var d = s.getLunar();
+$('#yuexiang').html(d.getYueXiang());
+$('#a').html(d.getYearInGanZhi()+'年 <br>生肖：属'+d.getYearShengXiao()+' <br>纳音五行：'+d.getYearNaYin());
+$('#a1').html(d.getMonthInGanZhi()+'月 <br>生肖：属'+d.getMonthShengXiao()+' <br>纳音五行：'+d.getMonthNaYin());
+$('#a2').html(d.getDayInGanZhi()+'日 <br>生肖：属'+d.getDayShengXiao()+' <br>纳音五行：'+d.getDayNaYin());
+$('#a3').html(s.getJulianDay());
+$('#b').html(d.getYearInChinese()+'年 '+d.getMonthInChinese()+'月 '+d.getDayInChinese()+' (阴历)');
+$('#c').html(s.getYear()+'年 '+s.getMonth()+'月 '+s.getDay()+'日 星期'+s.getWeekInChinese()+' '+s.getXingZuo()+'座 (阳历)');
+$('#m').html(d.getSeason());
+$('#d').html(d.getPengZuGan()+' '+d.getPengZuZhi());
+$('#yj').html('<span style="color:green">宜</span>：'+d.getDayYi().join(' ')+'<br><span style="color:red">忌</span>：'+d.getDayJi().join(' '));
+$('#e').html(d.getDayShengXiao()+'日 冲'+d.getChongDesc());
+$('#js').html(d.getDayJiShen().join(' '));
+$('#xs').html(d.getDayXiongSha().join(' '));
+$('#f').html(d.getSha());
+$('#g').html(d.getGong()+'方'+d.getXiu()+d.getZheng()+d.getAnimal()+' ('+d.getXiuLuck()+')');
+$('#g1').html(d.getXiuSong());
+$('#h').html('阳贵神：'+d.getPositionYangGuiDesc()+' <br>阴贵神：'+d.getPositionYinGuiDesc());
+$('#i').html(d.getPositionXiDesc());
+$('#i1').html(d.getPositionFuDesc());
+$('#i2').html(d.getPositionCaiDesc());
+$('#i3').html(d.getMonthPositionTai());
+$('#i4').html(d.getDayPositionTai());
+$('#x').html(d.getFestivals().join('、')+' '+s.getFestivals().join('、'));
+$('#y').html(d.getOtherFestivals().join('、')+' '+s.getOtherFestivals().join('、'));
+$('#j').html(d.getZhiXing());
+$('#k').html(d.getDayTianShen()+'('+d.getDayTianShenType()+') '+ d.getDayTianShenLuck());
+var p = d.getPrevJieQi(),n = d.getNextJieQi();
+$('#p').html(p.getName()+' '+p.getSolar().toYmdHms()+' 星期'+p.getSolar().getWeekInChinese());
+$('#n').html(n.getName()+' '+n.getSolar().toYmdHms()+' 星期'+n.getSolar().getWeekInChinese());
+var jiuxing = d.getDayNineStar();
+$('#jiuxing').html(jiuxing.getNumber()+jiuxing.getColor()+' - '+jiuxing.getNameInTaiYi()+'星('+jiuxing.getWuXing()+') - '+jiuxing.getTypeInTaiYi());
+$('#jiuxing-song').html(jiuxing.getSongInTaiYi());
 
-  compute();
-  
-  
-  setTimeout(()=>{
-    document.querySelectorAll('tr').forEach((e)=>{
-      e.querySelectorAll('td')[0].setAttribute('style','width: fit-content!important;white-space: nowrap!important;padding-right: 1em!important;')
-    })
-  },0);
+renderTime(year,month,day);
+}catch(e){
+  console.log(e);
+}
+};
+
+compute();
+
+
+// setTimeout(()=>{
+//   document.querySelectorAll('tr').forEach((e)=>{
+//     e.querySelectorAll('td')[0].setAttribute('style','width: fit-content!important;white-space: nowrap!important;padding-right: 1em!important;')
+//   })
+// },0);
 
 
 }
@@ -178,9 +204,9 @@ var cal = {
   mName : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], // Month Names
 
   data : null, // Events for the selected period
-  sDay : 0, // Current selected day
-  sMth : 0, // Current selected month
-  sYear : 0, // Current selected year
+  sDay : null, // Current selected day
+  sMth : null, // Current selected month
+  sYear : null, // Current selected year
   sMon : false, // Week start on Monday?
 
   // (B) DRAW CALENDAR FOR SELECTED MONTH
@@ -277,21 +303,18 @@ if (!cal.sMon && endDay != 6) {
     // (B5) REMOVE ANY PREVIOUS ADD/EDIT EVENT DOCKET
     cal.close();
     setTimeout(function(){
-      // document.getElementById("cal-dth").innerText = new Date().getDate()
-        //let tmN = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"], // Month Names
-        td = new Date().getDate().toString(),
-        ty = new Date().getFullYear(),
-        tm = new Date().getMonth() + 1;
-        document.querySelectorAll('div.dd').forEach(function(e){
-
-          if(cal.sYear === ty && cal.sMth + 1 === tm && e.innerHTML === td){
-            e.parentElement.setAttribute("class", "today")
-            e.setAttribute("class", "dd today")
-          }
-        });
-        document.querySelectorAll('.head > td')[0].innerHTML += '<br>周日';
-        document.getElementById("cal-bg").innerHTML = tm.toString().length === 2 ? tm.toString() : ['0',tm.toString()].join('');//tmN[tm - 1];
-      },0);
+      // cal.list();
+      document.querySelectorAll('div.dd').forEach(function(e){
+        if(cal.sYear === time().year && cal.sMth + 1 === time().month && e.innerHTML === time().day.toString()){
+          e.parentElement.setAttribute("class", "today")
+          e.setAttribute("class", "dd today")
+        }
+      });
+      document.querySelectorAll('.head > td')[0].innerHTML += '<br>周日';
+      document.getElementById("cal-bg").innerHTML = cal.sMth !== null 
+      ? (cal.sMth + 1).toString() 
+      : time().month.toString() ;
+    },0);
   },
 
   // (C) SHOW EDIT EVENT DOCKET FOR SELECTED DAY
@@ -302,12 +325,12 @@ if (!cal.sMon && endDay != 6) {
     // (C2) DRAW EVENT FORM
     var tForm = "<h1>" + (cal.data[cal.sDay] ? "EDIT" : "ADD") + " NOTE</h1>";
 //     tForm += "<div id='evt-date'>" + cal.sDay + " " + cal.mName[cal.sMth] + " " + cal.sYear + "</div>"; 
-    tForm += "<div id='evt-date'>" + cal.sDay + " " + (cal.sMth + 1) + " " + cal.sYear + "</div>";
-    tForm += "<textarea id='evt-details' required>" + (cal.data[cal.sDay] ? cal.data[cal.sDay] : "") + "</textarea>";
-    tForm += "<input type='button' value='Close' onclick='cal.close()'/>";
-    tForm += "<input type='button' value='Delete' onclick='cal.del()'/>";
-    tForm += "<input type='submit' value='Save'/>";
-    tForm += "<input type='button' value='Today?' onclick='cal.list();lunar()'/>";
+tForm += "<div id='evt-date'>" + cal.sDay + " " + (cal.sMth + 1) + " " + cal.sYear + "</div>";
+tForm += "<textarea id='evt-details' required>" + (cal.data[cal.sDay] ? cal.data[cal.sDay] : "") + "</textarea>";
+tForm += "<input type='button' value='Close' onclick='cal.close()'/>";
+tForm += "<input type='button' value='Delete' onclick='cal.del()'/>";
+tForm += "<input type='submit' value='Save'/>";
+tForm += "<input type='button' value='Today?' onclick='cal.list();lunar()'/>";
     //tForm += "<input type='button' value='Today?' />";
 
 
@@ -373,55 +396,51 @@ window.addEventListener("load", function () {
   }
 
   // (G4) START - DRAW CALENDAR
-//   // document.getElementById("cal-set").addEventListener("click", cal.list);
-let control = () => {  
+  // document.getElementById("cal-set").addEventListener("click", cal.list);
+  let control = () => {  
   document.getElementById("cal-yr").addEventListener('change', function(){cal.list();lunar()}); // cal.list);
-  document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});  // cal.list);
-//   if (document.querySelector('#cal-event').innerText.length > 0) {
-//   document.querySelector('input[value="Today?"]').addEventListener('click', function(){cal.list();lunar()});
-//   }
-//   document.getElementById("calendar").addEventListener('dbclick', function(){cal.list();lunar()});
+  document.getElementById("cal-mth").addEventListener('change',function(){cal.list();lunar()});
+  document.getElementById("cal-set").addEventListener('click',function(){
+    document.getElementById("cal-yr").value = time().year.toString();
+    document.getElementById("cal-mth").value = (time().month - 1).toString();
+    cal.sDay = time().day; cal.sYear = null,cal.sMth = null;
+    cal.list();
+    lunar()}); 
 }
-setTimeout(control,50);
-  cal.list();
+
+cal.list();
   // custom time
   
   let drawTime = (el, tl) => {
     document.querySelector(el).innerHTML = tl;
   };
-  let timeSplit = (el) => {
-    let h = (e) => {return e.setAttribute('style', 'visibility: hidden;')};
-    let v = (e) => {return e.setAttribute('style', 'visibility: visible;')};
-    document.querySelectorAll(el).forEach((e)=>{
-      e.getAttribute('style') === 'visibility: visible;' ? h(e) : v(e);
-    })
-  };
+  // let timeSplit = (el) => {
+  //   let h = (e) => {return e.setAttribute('style', 'visibility: hidden;')};
+  //   let v = (e) => {return e.setAttribute('style', 'visibility: visible;')};
+  //   document.querySelectorAll(el).forEach((e)=>{
+  //     e.getAttribute('style') === 'visibility: visible;' ? h(e) : v(e);
+  //   })
+  // };
   let timer = () => {
     ['#hour', '#min', '#sec', '#timeSplit'].forEach(function(e) {
-      e === '#hour' ? drawTime('#hour', time().h) : (
-        e === '#min' ? drawTime('#min', time().m) : (
-          e === '#sec' ? drawTime('#sec', time().s) : timeSplit('#timeSplit')
-          )
-        )
+     e === '#hour' 
+     ? drawTime('#hour', time().h) 
+     : ( e === '#min' 
+      ? drawTime('#min', time().m) 
+      : drawTime('#sec', time().s))
+      // e === '#hour' ? drawTime('#hour', time().h) : (
+      //   e === '#min' ? drawTime('#min', time().m) : (
+      //     e === '#sec' ? drawTime('#sec', time().s) : timeSplit('#timeSplit')
+      //     )
+      //   )
     })
   }
-//   let parentHeight = document.querySelector('#cal-container').clientHeight;
-//   let parentWidth = document.querySelector('#cal-container').clientWidth;
   setInterval(timer, 1000); 
   setTimeout(lunar,0);
-  setTimeout(mathHeight,30);
-    
+  setTimeout(control,50);
+  setTimeout(mathDS,30);
 });
-
 window.addEventListener("resize", function () {
-//  let parentHeight = document.querySelector('#cal-container').clientHeight;
-//  let parentWidth = document.querySelector('#cal-container').clientWidth;
-//  document.querySelector('#cal-time').setAttribute('style',`top: calc(${parentHeight}px * 1.25); font-size: calc(${parentWidth}px / 8)`);
-//  setTimeout(()=>{
-// //   let parentHeight2 = document.querySelector('#cal-container').clientHeight;
-//   document.querySelector('.huangli').setAttribute('style',`top: calc(${parentHeight}px + ${parentHeight2}px);`);
-// },0);
-    setTimeout(mathHeight,30);
- 
-
+  setTimeout(mathDS,0);
 },false)
+
