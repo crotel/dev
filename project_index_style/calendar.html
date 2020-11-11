@@ -3,17 +3,20 @@
   <meta charset="UTF-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <!-- <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no"> -->
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0,viewport-fit=cover">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/crotel/dev@b87555e/font_ShareTechMono.css">
-  <link rel="stylesheet" type="text/css" href="assets/calendar.css">
-  <script src="https://cdn.jsdelivr.net/npm/jquery@1.11.3/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
+  <link name="font" rel="stylesheet" href="assets/font_ShareTechMono.css">
+  <link name="dom" rel="stylesheet" type="text/css" href="assets/calendar.css">
+  <script src="assets/jquery.min.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@1.11.3/dist/jquery.min.js"></script> -->
+
+  <!-- <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script> -->
+  <script src="assets/lunar.js"></script>
 </head>
 <body>
   <div id="cal-wrap">
     <!-- [PERIOD SELECTOR] -->
-    <div id="cal-date" style="float: right;">
-      <input id="cal-set" type="button" value="SET"/ style="visibility: hidden;">
+    <div id="cal-date">
+      <input id="cal-set" type="button" value="RESET" />
       <span id="cal-dth"></span>
       <select id="cal-mth"></select>
       <select id="cal-yr"></select>
@@ -24,9 +27,9 @@
     <div id="cal-bg"></div>
     <div id='cal-time'>
       <span id="hour"></span>
-      <span id='timeSplit' style='visibility: visible;'>:</span>
+      <!-- <span id='timeSplit' style='visibility: visible;'>:</span> -->
       <span id="min"></span>
-      <span id='timeSplit' style='visibility: visible;'>:</span>
+      <!-- <span id='timeSplit' style='visibility: visible;'>:</span> -->
       <span id="sec"></span>
     </div>
     <!-- [EVENT] -->
