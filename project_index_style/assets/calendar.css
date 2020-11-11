@@ -5,6 +5,7 @@ td.today {
   border-radius: 15px;
   background: url(t01a7805144fcb47ee7.gif) no-repeat;
   background-position: center;
+  background-size: contain;
 }
 div.huangli {
   position: static;
